@@ -1,0 +1,20 @@
+{
+  "name": "mfx-rd-roi-backend",
+  "scripts": {
+    "dev": "bun run --hot src/server.ts"
+  },
+  "dependencies": {
+    "cloudinary": "^2.5.1",
+    "hono": "^4.7.1",
+    "mongoose": "^8.10.0",
+    "multer": "^1.4.5-lts.1",
+    "viem": "^2.23.2"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/bun": "latest",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.13.2",
+    "dotenv": "^16.4.7"
+  }
+}
