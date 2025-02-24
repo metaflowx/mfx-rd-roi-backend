@@ -49,12 +49,12 @@ export const getReferralHistory = async (c: Context) => {
   try {
     const userId = c.get('user').id;
 
-    const referralData = await ReferralEarnings.findOne({ userId }).select('referralEarningsHistory');
+    const referralData = await ReferralEarnings.findOne({ userId }).select('referralStats referrals').lean();;
     if (!referralData) {
       return c.json({ success: false, message: 'No referral history found' }, 404);
     }
 
-    return c.json({ message: 'Referral history fetch successfully', history: referralData.referralEarningsHistory },200);
+    return c.json({ message: 'Referral history fetch successfully', history: referralData },200);
   } catch (error) {
     return c.json({ message: 'Server error', error }, 500);
 }
