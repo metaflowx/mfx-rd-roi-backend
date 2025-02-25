@@ -24,7 +24,7 @@ export const uploadMiddleware = async (c: Context, next: Next) => {
 
     // Upload to Cloudinary
     const buffer = Buffer.from(await image.arrayBuffer());
-    const uploadedImage = await new Promise((resolve, reject) => {
+    const uploadedImage :any= await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream({ folder: "uploads" }, (error, result) => {
         if (error) return reject(error);
         resolve(result);

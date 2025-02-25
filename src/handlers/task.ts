@@ -38,21 +38,37 @@ export const createTask = async (c: Context) => {
 // Edit Task (Admin Only)
 export const editTask = async (c: Context) => {
     try {
-        const id = c.req.param('id');
-        const updateData = await c.req.json();
+        const id = c.req.param('id'); // Task ID from URL params
+        const updateFields = c.get("fields") as any; // Extract form-data fields
+        const newFilePath = c.get("filePath") as string; // Extract new image path (if any)
 
-        const updatedTask = await TaskModel.findByIdAndUpdate(id, updateData, { new: true });
-
-        if (!updatedTask) {
-            return c.json({ message: 'Task not found' }, 404);
+        // Find the existing task
+        const existingTask = await TaskModel.findById(id);
+        if (!existingTask) {
+            return c.json({ message: "Task not found" }, 404);
         }
 
-        return c.json({ message: 'Task updated successfully', task: updatedTask });
+        // Update only provided fields
+        if (updateFields?.title) existingTask.title = updateFields.title;
+        if (updateFields?.type) existingTask.type = updateFields.type;
+        if (updateFields?.description) existingTask.description = updateFields.description;
+        if (updateFields?.points) existingTask.points = updateFields.points;
+
+        // If a new image is uploaded, update the image path
+        if (newFilePath) {
+            existingTask.image = newFilePath;
+        }
+
+        // Save the updated task
+        await existingTask.save();
+
+        return c.json({ message: "Task updated successfully", task: existingTask });
     } catch (error) {
-        console.error('Error updating task:', error);
-        return c.json({ message: 'Server error', error }, 500);
+        console.error("Error updating task:", error);
+        return c.json({ message: "Server error", error }, 500);
     }
 };
+
 
 // Delete Task (Admin Only)
 export const deleteTask = async (c: Context) => {

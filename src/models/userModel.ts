@@ -9,6 +9,7 @@ export interface IUser extends Document {
     membershipPackage?: string;
     totalPacakge: number; 
     totalEarnings: number;
+    status:string;
   }
   
 

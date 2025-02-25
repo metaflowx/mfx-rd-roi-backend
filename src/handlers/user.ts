@@ -255,3 +255,39 @@ export const deleteUser = async (c: Context) => {
         return c.json({ message: 'Server error', error }, 500);
     }
 };
+
+
+// Change User Status
+export const changeUserStatus = async (c: Context) => {
+    try {
+
+        // Extract userId from params
+        const userId = c.req.param('id');
+        if (!userId) {
+            return c.json({ message: 'User ID is required' }, 400);
+        }
+
+        // // Get new status from request body
+        // const { status } = await c.req.json();
+        // const validStatuses = ['ACTIVE', 'DELETE', 'INACTIVE', 'BLOCK', 'FREEZE'];
+
+        // if (!validStatuses.includes(status)) {
+        //     return c.json({ message: 'Invalid status' }, 400);
+        // }
+
+        // Update user status
+        const updatedUser = await UserModel.findByIdAndUpdate(
+            userId,
+            { status:"BLOCK" },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return c.json({ message: 'User not found' }, 404);
+        }
+
+        return c.json({ message: 'User status updated successfully'});
+    } catch (error) {
+        return c.json({ message: 'Server error', error }, 500);
+    }
+};

@@ -11,5 +11,6 @@ userRoutes.get('/list', protect, isAdmin,(c)=> user.getAllUsers(c));
 userRoutes.put('/updatePassword', protect,(c)=> user.updatePassword(c));
 userRoutes.get('/me', protect, (c)=> user.getUserById(c));
 userRoutes.delete('/delete', protect, (c)=> user.deleteUser(c));
+userRoutes.put('/changeUserStatus/:id', protect, isAdmin, (c)=> user.changeUserStatus(c));
 
 export default userRoutes;

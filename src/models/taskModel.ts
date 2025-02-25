@@ -2,16 +2,15 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface ITask extends Document {
     title: string;
+    type:string;
     description: string;
     image: string; // URL of task image
-    videoUrl: string; // Optional video URL
     points: number;
-    views: number;
-    duration: number; // In seconds (e.g., 90 for 1m30s)
     status: "ACTIVE" | "INACTIVE";
     reviews: {
         userId: mongoose.Types.ObjectId;
         rating: number;
+        reviewDate: Date;
     }[];
 }
 
