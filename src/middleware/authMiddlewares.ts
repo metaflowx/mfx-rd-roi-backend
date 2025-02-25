@@ -1,6 +1,7 @@
 import { Context, Next } from 'hono'
 import { Jwt } from 'hono/utils/jwt'
-//
+import * as dotenv from "dotenv";
+dotenv.config(); // Load environment variables
 import UserModel from '../models/userModel'
 
 // Protect Route for Authenticated Users
@@ -12,7 +13,7 @@ export const protect = async (c: Context, next: Next) => {
       if (!token) {
         return c.json({ message: 'Not authorized to access this route' })
       }
-      const { id } = await Jwt.verify(token, Bun.env.JWT_SECRET || 'mfx-rd-roi-backend')
+      const { id } = await Jwt.verify(token, process.env.JWT_SECRET || 'mfx-rd-roi-backend')
 
       const user = await UserModel.findById(id).select('-password')
       c.set('user', user)

@@ -1,10 +1,12 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import * as dotenv from "dotenv"
+import { serve } from '@hono/node-server'
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 import { errorHandler, notFound } from "./middleware";
 import { connectMongoDB } from './config/dbConnect';
+import * as dotenv from "dotenv";
+dotenv.config(); // Load environment variables
 
 
 import { Users, Admin , PackagePlan , Task, Investment, Referral} from './routes'
@@ -64,9 +66,11 @@ app.notFound((c) => {
   return error
 })
 
-const port = Bun.env.PORT || 8000
+const port = process.env.PORT || 8000
 
-export default {
-    port,
-    fetch:app.fetch
-}
+serve({
+  fetch: app.fetch,
+  port: Number(port),
+}, (info) => {
+  console.log(`Server is running on http://localhost:${info.port}`)
+});

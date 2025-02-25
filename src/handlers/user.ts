@@ -5,7 +5,8 @@ import { Context } from 'hono';
 import { generateJwtToken, comparePassword , encryptPrivateKey , decryptPrivateKey, generateUniqueReferralCode} from '../utils/index';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { addReferral } from '../repositories/referral'; // Import the function
-
+import * as dotenv from "dotenv";
+dotenv.config(); // Load environment variables
 
 
 // Create User

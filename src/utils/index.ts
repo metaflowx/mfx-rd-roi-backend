@@ -2,7 +2,8 @@ import { Context, Next } from 'hono';
 import {Jwt} from "hono/utils/jwt"
 import UserModel from '../models/userModel';
 import ReferralEarnings from '../models/referralModel';
-
+import * as dotenv from "dotenv";
+dotenv.config(); // Load environment variables
 import { createCipheriv, createDecipheriv, pbkdf2Sync, randomBytes } from 'crypto';
 
 // Generate a unique 32-byte (256-bit) key from a user's password
@@ -23,7 +24,7 @@ export const generateJwtToken = (userId: string) => {
     }
     return Jwt.sign(
         payload_,
-        Bun.env.JWT_SECRET || "mfx-rd-roi-backend"
+        process.env.JWT_SECRET || "mfx-rd-roi-backend"
     )
 }
 
@@ -42,7 +43,7 @@ export const protect = async (c: Context, next: Next) => {
           return c.json({ message: 'Not authorized to access this route' })
         }
   
-        const { id } = await Jwt.verify(token, Bun.env.JWT_SECRET || '')
+        const { id } = await Jwt.verify(token, process.env.JWT_SECRET || '')
         const user = await UserModel.findById(id).select('-password')
         c.set('user', user)
   
