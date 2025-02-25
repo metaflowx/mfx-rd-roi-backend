@@ -6,7 +6,7 @@
     "build": "bun build src/server.ts --outdir dist",
     "dev:node": "tsx watch src/server.ts",
     "start:node": "tsx watch src/server.ts",
-    "build:node": "tsx build src/server.ts --outdir dist"
+    "build:node": "tsc"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.8",
