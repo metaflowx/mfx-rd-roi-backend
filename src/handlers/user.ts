@@ -267,18 +267,18 @@ export const changeUserStatus = async (c: Context) => {
             return c.json({ message: 'User ID is required' }, 400);
         }
 
-        // // Get new status from request body
-        // const { status } = await c.req.json();
-        // const validStatuses = ['ACTIVE', 'DELETE', 'INACTIVE', 'BLOCK', 'FREEZE'];
+        // Get new status from request body
+        const { status } = await c.req.json();
+        const validStatuses = ['ACTIVE', 'DELETE', 'INACTIVE', 'BLOCK', 'FREEZE'];
 
-        // if (!validStatuses.includes(status)) {
-        //     return c.json({ message: 'Invalid status' }, 400);
-        // }
+        if (!validStatuses.includes(status)) {
+            return c.json({ message: 'Invalid status' }, 400);
+        }
 
         // Update user status
         const updatedUser = await UserModel.findByIdAndUpdate(
             userId,
-            { status:"BLOCK" },
+            { status },
             { new: true }
         );
 

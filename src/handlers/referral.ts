@@ -63,18 +63,27 @@ export const getReferralHistory = async (c: Context) => {
 
 export const disableReferral = async (c: Context) => {
   try {
-      const userId = c.get("user"); // Get user ID from middleware
-      if (!userId) {
-          return c.json({ message: "Unauthorized" }, 401);
-      }
+       // Extract userId from params
+       const _id = c.req.param('id');
+       if (!_id) {
+           return c.json({ message: 'User ID is required' }, 400);
+       }
 
+
+      // Get new status from request body
+      const { enableReferral } = await c.req.json();
+      const validStatuses = [true, false ];
+
+      if (!validStatuses.includes(enableReferral)) {
+          return c.json({ message: 'Invalid status' }, 400);
+      }
       // Update enableReferral to false
       const updatedReferral = await ReferralEarnings.findOneAndUpdate(
-          { userId },
-          { $set: { enableReferral: false } },
+          { _id },
+          { $set: { enableReferral: enableReferral } },
           { new: true }
       );
-
+      console.log("updatedReferral=====>>",updatedReferral)
       if (!updatedReferral) {
           return c.json({ message: "Referral earnings data not found" }, 404);
       }

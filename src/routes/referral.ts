@@ -8,7 +8,7 @@ const referralRoutes = new Hono();
 referralRoutes.get('/stats', protect, (c) => referral.getReferralStats(c)); // Get referral stats for the logged-in user
 referralRoutes.get('/earnings', protect, (c) => referral.getReferralEarnings(c)); // Get total referral earnings
 referralRoutes.get('/history', protect, (c) => referral.getReferralHistory(c)); // Get referral earnings history
-referralRoutes.get('/disableReferral', protect, isAdmin, (c) => referral.disableReferral(c)); 
+referralRoutes.put('/disableReferral/:id', protect, isAdmin, (c) => referral.disableReferral(c)); 
 referralRoutes.get('/ReferralListHistory', protect, isAdmin, (c) => referral.ReferralListHistory(c)); 
 
 export default referralRoutes;
