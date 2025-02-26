@@ -101,7 +101,7 @@ export const loginAdmin = async (c: Context) => {
 // **Get Admin Details**
 export const getAdmin = async (c: Context) => {
     try {
-        const admin = await UserModel.findOne({ role: 'ADMIN' });
+        const admin = await UserModel.findOne({ role: 'ADMIN' }).select('-password -walletAddress -membershipPackage');
         if (!admin) {
             return c.json({ message: 'Admin not found' }, 404);
         }
