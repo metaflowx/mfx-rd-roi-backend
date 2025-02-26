@@ -98,7 +98,8 @@ export const distributeReferralRewards = async (userId: Types.ObjectId, packageA
 
         // Move up the referral chain
         const referrerData = await ReferralEarnings.findOne({ userId: referrerId });
-        referrerId = referrerData ? referrerData.referrerBy : null;
+        if(!referrerData || referrerData.referrerBy == null ) break;
+        referrerId = referrerData.referrerBy;
       }
 
       console.log(`Referral rewards distributed successfully for user: ${userId}`);
