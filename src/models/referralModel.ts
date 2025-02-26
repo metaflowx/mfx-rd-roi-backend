@@ -5,6 +5,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IReferralEarnings extends Document {
   userId: mongoose.Schema.Types.ObjectId;
   referrerBy: mongoose.Schema.Types.ObjectId;
+  referralCode:string;
   referralStats: {
     level1Count: number;
     level2Count: number;

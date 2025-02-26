@@ -9,5 +9,6 @@ referralRoutes.get('/stats', protect, (c) => referral.getReferralStats(c)); // G
 referralRoutes.get('/earnings', protect, (c) => referral.getReferralEarnings(c)); // Get total referral earnings
 referralRoutes.get('/history', protect, (c) => referral.getReferralHistory(c)); // Get referral earnings history
 referralRoutes.get('/disableReferral', protect, isAdmin, (c) => referral.disableReferral(c)); 
+referralRoutes.get('/ReferralListHistory', protect, isAdmin, (c) => referral.ReferralListHistory(c)); 
 
 export default referralRoutes;

@@ -84,3 +84,38 @@ export const disableReferral = async (c: Context) => {
       return c.json({ message: "Server error", error }, 500);
   }
 };
+
+/**
+ * Get referral list earnings history
+ */
+export const ReferralListHistory = async (c: Context) => {
+  try {
+    const referralData = await ReferralEarnings.find()
+    .select('referralStats.userId referralStats.levels referralCode enableReferral')
+    .populate({
+      path: 'userId',
+      match: { role: { $ne: 'ADMIN' } }, // Exclude users with role 'ADMIN'
+      select: 'email mobileNumber status', // Only include necessary fields
+    })
+    .lean();
+  
+    // Filter out entries where userId is null
+    const filteredData = referralData.filter(item => item.userId !== null).map(item => {
+      // Extract earnings from all levels
+      const levelEarnings = item.referralStats?.levels || {};
+      const totalEarnings = Object.values(levelEarnings).reduce((sum, level) => sum + (level.earnings || 0), 0);
+
+      return {
+        ...item,
+        totalEarnings, // Add total earnings field
+      };
+    });
+    if (!filteredData || filteredData.length === 0) {
+      return c.json({ success: false, message: 'No referral history found' }, 404);
+    }
+   
+    return c.json({ message: 'Referral history fetch successfully', history: filteredData },200);
+  } catch (error) {
+    return c.json({ message: 'Server error', error }, 500);
+}
+};
