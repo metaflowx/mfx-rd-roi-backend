@@ -1,7 +1,13 @@
 import { Context } from 'hono';
 import TaskModel from '../models/taskModel';
 import mongoose from 'mongoose';
+import { v2 as cloudinary } from "cloudinary";
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // Create Task (Admin Only)
 export const createTask = async (c: Context) => {
@@ -38,9 +44,8 @@ export const createTask = async (c: Context) => {
 // Edit Task (Admin Only)
 export const editTask = async (c: Context) => {
     try {
-        const id = c.req.param('id'); // Task ID from URL params
-        const updateFields = c.get("fields") as any; // Extract form-data fields
-        const newFilePath = c.get("filePath") as string; // Extract new image path (if any)
+        const id = c.req.param("id"); // Task ID from URL params
+        const { title, type, description, points, image } = await c.req.json(); // Extract all fields from request body
 
         // Find the existing task
         const existingTask = await TaskModel.findById(id);
@@ -49,15 +54,11 @@ export const editTask = async (c: Context) => {
         }
 
         // Update only provided fields
-        if (updateFields?.title) existingTask.title = updateFields.title;
-        if (updateFields?.type) existingTask.type = updateFields.type;
-        if (updateFields?.description) existingTask.description = updateFields.description;
-        if (updateFields?.points) existingTask.points = updateFields.points;
-
-        // If a new image is uploaded, update the image path
-        if (newFilePath) {
-            existingTask.image = newFilePath;
-        }
+        if (title) existingTask.title = title;
+        if (type) existingTask.type = type;
+        if (description) existingTask.description = description;
+        if (points) existingTask.points = points;
+        if (image) existingTask.image = image; // Image URL in string format
 
         // Save the updated task
         await existingTask.save();
@@ -158,3 +159,33 @@ export const addReview = async (c: Context) => {
     }
 };
 
+
+// upload image
+export const uploadImage = async (c: Context) => {
+    try {
+        const formData = await c.req.formData();
+        console.log("Received Form Data:", formData);
+    
+        const image = formData.get("image");
+    
+        if (!(image instanceof File)) {
+          return c.json({ error: "Image file is required." }, 400);
+        }
+    
+        // Upload to Cloudinary
+        const buffer = Buffer.from(await image.arrayBuffer());
+        const uploadedImage: any = await new Promise((resolve, reject) => {
+          cloudinary.uploader.upload_stream({ folder: "uploads" }, (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }).end(buffer);
+        });
+    
+        console.log("✅ Uploaded to Cloudinary:", uploadedImage.secure_url);
+    
+        return c.json({ message: "Image uploaded successfully", url: uploadedImage.secure_url }, 200);
+    } catch (error) {
+    console.error("❌ Upload Error:", error);
+    return c.json({ message: "Server error", error }, 500);
+    }
+};

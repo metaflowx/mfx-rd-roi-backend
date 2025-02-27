@@ -43,10 +43,7 @@ export const editPacakge = async (c: Context) => {
         let id = c.req.param("id"); // Get ID from request params
         const updateData = await c.req.json();
 
-         // Prevent updating the package name
-         if (updateData.name) {
-            return c.json({ message: 'Pacakge name cannot be updated' }, 400);
-        }
+        
         const updatedPackage = await PacakgeModel.findByIdAndUpdate({_id:new mongoose.Types.ObjectId(id)}, updateData, { new: true });
 
         if (!updatedPackage) {
