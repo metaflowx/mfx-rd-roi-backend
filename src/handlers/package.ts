@@ -1,12 +1,12 @@
 import { Context } from 'hono';
-import PacakgeModel from '../models/packageModel'; 
+import PackageModel from '../models/packageModel'; 
 import UserModel from '../models/userModel'; 
 import mongoose, { Schema, Document, Types } from 'mongoose';
 import { addInvestment } from '../repositories/investment'; // Import function
 import { distributeReferralRewards } from '../repositories/referral'; // Import the function
 
-// **1. Add Pacakge Package**
-export const addPacakge = async (c: Context) => {
+// **1. Add Package Package**
+export const addPackage = async (c: Context) => {
     try {
         const { name, amount, dailyEarnings, durationInDays, totalReturns, bonus } = await c.req.json();
 
@@ -16,13 +16,13 @@ export const addPacakge = async (c: Context) => {
         }
 
         // Check if package already exists
-        const existingPackage = await PacakgeModel.findOne({ name });
+        const existingPackage = await PackageModel.findOne({ name });
         if (existingPackage) {
-            return c.json({ message: 'Pacakge already exists' }, 400);
+            return c.json({ message: 'Package already exists' }, 400);
         }
 
         // Create new package
-        const newPackage = await PacakgeModel.create({
+        const newPackage = await PackageModel.create({
             name,
             amount,
             dailyEarnings,
@@ -31,43 +31,43 @@ export const addPacakge = async (c: Context) => {
             bonus
         });
 
-        return c.json({ message: 'Pacakge created successfully', package: newPackage }, 200);
+        return c.json({ message: 'Package created successfully', package: newPackage }, 200);
     } catch (error) {
         return c.json({ message: 'Server error', error }, 500);
     }
 };
 
-// **2. Edit Pacakge Package**
-export const editPacakge = async (c: Context) => {
+// **2. Edit Package Package**
+export const editPackage = async (c: Context) => {
     try {
         let id = c.req.param("id"); // Get ID from request params
         const updateData = await c.req.json();
 
         
-        const updatedPackage = await PacakgeModel.findByIdAndUpdate({_id:new mongoose.Types.ObjectId(id)}, updateData, { new: true });
+        const updatedPackage = await PackageModel.findByIdAndUpdate({_id:new mongoose.Types.ObjectId(id)}, updateData, { new: true });
 
         if (!updatedPackage) {
-            return c.json({ message: 'Pacakge not found' }, 404);
+            return c.json({ message: 'Package not found' }, 404);
         }
 
-        return c.json({ message: 'Pacakge updated successfully', package: updatedPackage });
+        return c.json({ message: 'Package updated successfully', package: updatedPackage });
     } catch (error) {
         return c.json({ message: 'Server error', error }, 500);
     }
 };
 
-// **3. Delete Pacakge Package**
-export const deletePacakge = async (c: Context) => {
+// **3. Delete Package Package**
+export const deletePackage = async (c: Context) => {
     try {
         const { id } = c.req.param(); // Get ID from request params
 
-        const deletedPackage = await PacakgeModel.findByIdAndDelete(id);
+        const deletedPackage = await PackageModel.findByIdAndDelete(id);
 
         if (!deletedPackage) {
-            return c.json({ message: 'Pacakge not found' }, 404);
+            return c.json({ message: 'Package not found' }, 404);
         }
 
-        return c.json({ message: 'Pacakge deleted successfully' });
+        return c.json({ message: 'Package deleted successfully' });
     } catch (error) {
         return c.json({ message: 'Server error', error }, 500);
     }
@@ -78,7 +78,7 @@ export const getPackageById = async (c: Context) => {
         const { id } = c.req.param(); // Get ID from request params
 
         // ✅ Check if package exists
-        const packageData = await PacakgeModel.findById(id);
+        const packageData = await PackageModel.findById(id);
         if (!packageData) {
             return c.json({ message: "Package not found" }, 404);
         }
@@ -90,10 +90,10 @@ export const getPackageById = async (c: Context) => {
     }
 };
 
-// **4. Get All Pacakge Packages**
-export const getPacakges = async (c: Context) => {
+// **4. Get All Package Packages**
+export const getPackages = async (c: Context) => {
     try {
-        const packages = await PacakgeModel.find();
+        const packages = await PackageModel.find();
         return c.json({ packages });
     } catch (error) {
         return c.json({ message: 'Server error', error }, 500);
@@ -101,7 +101,7 @@ export const getPacakges = async (c: Context) => {
 };
 
 
-export const buyPacakgePlan = async (c: Context) => {
+export const buyPackagePlan = async (c: Context) => {
     try {
         const userData = c.get('user'); // Extract user ID from middleware
         console.log("userData======>>>",userData)
@@ -119,9 +119,9 @@ export const buyPacakgePlan = async (c: Context) => {
         }
 
         // ✅ Check if  package exists
-        const packageData = await PacakgeModel.findById(packageId);
+        const packageData = await PackageModel.findById(packageId);
         if (!packageData) {
-            return c.json({ message: "Pacakge not found" }, 404);
+            return c.json({ message: "Package not found" }, 404);
         }
 
         // ✅ Call investment function (Prevents duplicate purchases)
@@ -135,13 +135,13 @@ export const buyPacakgePlan = async (c: Context) => {
 
         // ✅ Update user package details
         user.membershipPackage = packageData.name;
-        user.totalPacakge += packageData.amount; // Add to total package amount
+        user.totalPackage += packageData.amount; // Add to total package amount
 
         console.log("user=====>>>",user)
         // await user.save(); // Save updated user data
 
         return c.json({
-            message: "Pacakge plan purchased successfully",
+            message: "Package plan purchased successfully",
             user
         }, 200);
 

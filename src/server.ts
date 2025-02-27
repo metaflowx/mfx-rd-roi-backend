@@ -7,7 +7,7 @@ import { errorHandler, notFound } from "./middleware";
 import { connectMongoDB } from './config/dbConnect';
 
 
-import { Users, Admin , PackagePlan , Task, Investment, Referral} from './routes'
+import { Users, Admin , PackagePlan , Task, Investment, Referral, Dashboard} from './routes'
 
 const app = new Hono().basePath("/api");
 
@@ -49,6 +49,7 @@ app.route('/v1/pacakage', PackagePlan);
 app.route('/v1/task', Task);
 app.route('/v1/investment', Investment);
 app.route('/v1/referral', Referral);
+app.route('/v1/dashboard', Dashboard);
 
 
 

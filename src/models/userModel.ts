@@ -7,7 +7,7 @@ export interface IUser extends Document {
     walletAddress: string;
     password: string;
     membershipPackage?: string;
-    totalPacakge: number; 
+    totalPackage: number; 
     totalEarnings: number;
     status:string;
   }
@@ -25,7 +25,7 @@ export interface IUser extends Document {
         type: String,
         default: null
       },
-      totalPacakge: {
+      totalPackage: {
           type: Number,
           default: 0
       },
