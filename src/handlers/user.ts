@@ -2,9 +2,10 @@ import UserModel from '../models/userModel';
 import WalletModel from '../models/walletModel';
 import ReferralEarnings from '../models/referralModel';
 import { Context } from 'hono';
-import { generateJwtToken, comparePassword , encryptPrivateKey , decryptPrivateKey, generateUniqueReferralCode} from '../utils/index';
-import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
+import { generateJwtToken, comparePassword  , generateUniqueReferralCode} from '../utils/index';
 import { addReferral } from '../repositories/referral'; // Import the function
+import { generateRandomWallet } from '../services';
+import { accessTokenPublicKey, hybridEncrypt } from '../utils/cryptography';
 
 
 
@@ -39,19 +40,13 @@ export const createUser = async (c: Context) => {
         if (existingUser) {
             return c.json({ message: 'User already exists' }, 400);
         }
- 
-      // Generate Wallets
-      const privateKey = generatePrivateKey();
-      const account = privateKeyToAccount(privateKey);
         
-
         const hashPassword = await Bun.password.hash(password,"bcrypt")
      
         const data = await UserModel.create({
             email:email,
             mobileNumber: mobileNumber,
-            password: hashPassword,
-            walletAddress: account.address
+            password: hashPassword
         })
         if(!data._id){
             return c.json({
@@ -59,19 +54,19 @@ export const createUser = async (c: Context) => {
             })
         }
 
-        // const encryptedKey = encryptPrivateKey(privateKey, process.env.SECRET_KEY || "default-secret");
-        // // const decriptedkey = decryptPrivateKey(encryptedKey,process.env.SECRET_KEY || "default-secret");
+        const { address, privateKey } = generateRandomWallet()
 
-        // let wallet = await WalletModel.create({
-        //     userId: data._id,
-        //     address: account.address,
-        //     encryptedPrivateKey: encryptedKey,
-        //     assets: [],
-        // });
-        // console.log("wallet====>>>",wallet)
+        const { encryptedSymmetricKey, encryptedData, salt } = hybridEncrypt(accessTokenPublicKey, privateKey, data._id.toString());
 
-        
-        // Directly call addReferral function
+        await WalletModel.create({
+            userId: data._id,
+            address: address,
+            encryptedSymmetricKey: encryptedSymmetricKey,
+            encryptedPrivateKey: encryptedData,
+            salt: salt,
+        })
+
+        /// Directly call addReferral function
         if (referralCode) {
             let referData = await ReferralEarnings.findOne({ referralCode: referralCode });
 
@@ -81,16 +76,14 @@ export const createUser = async (c: Context) => {
                 })
             }
             const newReferralCode = await generateUniqueReferralCode();
-            console.log("newReferralCode====>>>",newReferralCode)
             if (!newReferralCode) {
-                return new Error("Referral code cannot be null");
+                throw new Error("Referral code cannot be null");
             }
             const referralContext = { userId: data._id, referrerBy: referData.userId, referralCode: newReferralCode };
             await addReferral(referralContext);
         }
-
-
-        // Generate JWT Token
+        
+        /// Generate JWT Token
         const token = await generateJwtToken(data._id.toString());
 
         return c.json({ message: 'User created successfully', user: data, token}, 200);
@@ -121,7 +114,7 @@ export const loginUser = async (c: Context) => {
         }  
 
        // Compare password
-        const isPasswordValid = await comparePassword(password, user.password);
+        const isPasswordValid =  comparePassword(password, user.password);
         if (!isPasswordValid) {
             return c.json({ message: 'Invalid password' }, 401);
         }
@@ -154,21 +147,7 @@ export const loginUser = async (c: Context) => {
 // Get All Users with Wallets and Decrypt Private Key
 export const getAllUsers = async (c: Context) => {
     try {
-        const users = await UserModel.find().lean();
-        const usersWithWallets = await Promise.all(
-            users.map(async (user) => {
-                const wallets = await WalletModel.find({ userId: user._id }).lean();                
-                const walletsWithDecryptedKey = wallets.map(wallet => ({
-                    ...wallet,
-                    decryptedPrivateKey: decryptPrivateKey(wallet.encryptedPrivateKey, process.env.SECRET_KEY || "default-secret") 
-                    // account:privateKeyToAccount(decryptPrivateKey(wallet.encryptedPrivateKey, process.env.SECRET_KEY || "default-secret")).address
-
-                }));
-
-                return { ...user, wallets: walletsWithDecryptedKey };
-            })
-        );
-
+        const usersWithWallets = await UserModel.find();
         return c.json(usersWithWallets);
     } catch (error) {
         console.error(error);

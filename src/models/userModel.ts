@@ -39,10 +39,6 @@ export interface IUser extends Document {
         enum: ['ADMIN', 'USER'],
         default: "USER"
       },
-      walletAddress: {
-        type: String,
-        required: true
-      },
       password: {
         type: String,
         required: true,

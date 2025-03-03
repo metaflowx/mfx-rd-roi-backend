@@ -36,6 +36,10 @@ const packageSchema: Schema = new Schema(
             type: Number, 
             required: true 
         },
+        description: {
+            type: String,
+            required: true
+        },
         status: { 
             type: String, 
             enum: ["ACTIVE","INACTIVE"],

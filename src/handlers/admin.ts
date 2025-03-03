@@ -1,9 +1,10 @@
 import { Context } from 'hono';
 import UserModel from '../models/userModel';
 import WalletModel from '../models/walletModel';
-import { generateJwtToken, comparePassword , encryptPrivateKey , decryptPrivateKey, generateUniqueReferralCode} from '../utils/index';
-import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
-import { addReferral } from '../repositories/referral'; // Import the function
+import { generateJwtToken, comparePassword, generateUniqueReferralCode } from '../utils/index';
+import { addReferral } from '../repositories/referral';
+import { accessTokenPublicKey, hybridEncrypt } from '../utils/cryptography';
+import { generateRandomWallet } from '../services';
 
 
 // **Create Admin (Only Once)**
@@ -23,40 +24,35 @@ export const createAdmin = async (c: Context) => {
         if (existingAdmin) {
             return c.json({ message: 'Admin already exists' }, 403);
         }
-
         const hashedPassword = await Bun.password.hash(password, "bcrypt");
 
-
-        // Generate Wallets
-        const privateKey = generatePrivateKey();
-        const account = privateKeyToAccount(privateKey);
-        
         const admin = await UserModel.create({
-            email:email,
+            email: email,
             password: hashedPassword,
             role: 'ADMIN',
-            status: 'ACTIVE',
-            walletAddress: account.address
+            status: 'ACTIVE'
         });
-        if(!admin._id){
+        if (!admin._id) {
             return c.json({
                 message: 'something went wrong'
             })
         }
-        
-        const encryptedKey = encryptPrivateKey(privateKey, process.env.SECRET_KEY || "default-secret");
-        // const decriptedkey = decryptPrivateKey(encryptedKey,process.env.SECRET_KEY || "default-secret");
 
-        // let wallet = await WalletModel.create({
-        //     userId: admin._id,
-        //     address: account.address,
-        //     encryptedPrivateKey: encryptedKey,
-        //     assets: [],
-        // });
-        // console.log("wallet====>>>",wallet)
+        const { address, privateKey } = generateRandomWallet()
+
+        const { encryptedSymmetricKey, encryptedData, salt } = hybridEncrypt(accessTokenPublicKey, privateKey, admin._id.toString());
+
+        let wallet = await WalletModel.create({
+            userId: admin._id,
+            address: address,
+            encryptedSymmetricKey: encryptedSymmetricKey,
+            encryptedPrivateKey: encryptedData,
+            salt: salt,
+        });
+        console.log("wallet====>>>", wallet)
 
         const newReferralCode = await generateUniqueReferralCode();
-        const referralContext = { userId: admin._id, referrerId: null , referralCode:newReferralCode };
+        const referralContext = { userId: admin._id, referrerBy: '', referralCode: newReferralCode };
         await addReferral(referralContext);
 
 
@@ -84,7 +80,7 @@ export const loginAdmin = async (c: Context) => {
         if (!isPasswordValid) {
             return c.json({ message: 'Invalid password' }, 401);
         }
-        if(!admin._id){
+        if (!admin._id) {
             return c.json({
                 message: 'something went wrong'
             })
@@ -125,13 +121,13 @@ export const updateAdmin = async (c: Context) => {
 
         if (email) admin.email = email;
 
-         // Check if all required fields are provided
-         if (!oldPassword || !newPassword || !confirmNewPassword) {
+        // Check if all required fields are provided
+        if (!oldPassword || !newPassword || !confirmNewPassword) {
             return c.json({ message: 'All fields are required' }, 400);
         }
 
-         // Ensure new passwords match
-         if (newPassword !== confirmNewPassword) {
+        // Ensure new passwords match
+        if (newPassword !== confirmNewPassword) {
             return c.json({ message: 'New passwords do not match' }, 400);
         }
 

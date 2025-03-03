@@ -44,7 +44,7 @@ export const editPackage = async (c: Context) => {
         const updateData = await c.req.json();
 
         
-        const updatedPackage = await PackageModel.findByIdAndUpdate({_id:new mongoose.Types.ObjectId(id)}, updateData, { new: true });
+        const updatedPackage = await PackageModel.findByIdAndUpdate({_id:id}, updateData, { new: true });
 
         if (!updatedPackage) {
             return c.json({ message: 'Package not found' }, 404);
@@ -103,7 +103,7 @@ export const getPackages = async (c: Context) => {
 
 export const buyPackagePlan = async (c: Context) => {
     try {
-        const userData = c.get('user'); // Extract user ID from middleware
+        const userData = c.get('user'); 
         console.log("userData======>>>",userData)
         const {packageId } = await c.req.json();
 
@@ -125,13 +125,13 @@ export const buyPackagePlan = async (c: Context) => {
         }
 
         // ✅ Call investment function (Prevents duplicate purchases)
-        const investmentResponse = await addInvestment(user._id, packageId);
+        const investmentResponse = await addInvestment(user._id as Types.ObjectId, packageId);
         if (!investmentResponse.success) {
             return c.json({ message: investmentResponse.message }, 400);
         }
  
         // ✅ Distribute referral rewards
-        await distributeReferralRewards(user._id, packageData.amount);
+        await distributeReferralRewards(user._id as Types.ObjectId, packageData.amount);
 
         // ✅ Update user package details
         user.membershipPackage = packageData.name;
