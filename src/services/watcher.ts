@@ -4,16 +4,6 @@ import walletModel, { IWallet } from "../models/walletModel";
 import { updateDepositTx } from "../handlers/transaction";
 import assetsModel, { IAsset } from "../models/assetsModel";
 import { Address, parseAbiItem } from "viem";
-import { updateWalletBalance } from "../repositories/wallet";
-
-
-// import { transactionModel, ITransaction } from "../models/transactionModel";
-// import { walletModel, IWallet } from "../models/walletModel";
-// import { assetsModel, IAsset } from "../models/assetsModel";
-// import { updateWalletBalance } from "../services/walletService";
-// import { updateDepositTx } from "../services/transactionService";
-// import { EVMWalletService } from "../services/EVMWalletService";
-// import { parseAbiItem, Address } from "viem";
 
 export default class Watcher {
     constructor(private readonly chain: string) {
@@ -26,7 +16,7 @@ export default class Watcher {
         const client = network.getPublicClient();
         const blockNumber = await client.getBlockNumber();
 
-        // ✅ Step 1: Find confirmed Deposits
+        /// ✅ Step 1: Find confirmed Deposits
         const dbData = await transactionModel.find({
             $and: [
                 { txStatus: "confirmed" },  // Watch for pending deposits
@@ -41,7 +31,7 @@ export default class Watcher {
                     const userWallet = await walletModel.findOne({ userId: data.userId._id }) as IWallet;
                     const asset = await assetsModel.findOne({ _id: data.assetId._id }) as IAsset;
 
-                    // ✅ Step 2: Check for Deposit Events
+                    /// ✅ Step 2: Check for Deposit Events
                     const logs = await client.getLogs({
                         address: asset.assetAddress as Address,
                         event: asset.assetAddress !== '0x0000000000000000000000000000000000001010'
@@ -56,7 +46,7 @@ export default class Watcher {
                     if (logs.length > 0) {
                         await Promise.all(logs.map(async (log: any) => {
                             try {
-                                // ✅ Step 3: Prevent Duplicate Transaction Insertion
+                                /// ✅ Step 3: Prevent Duplicate Transaction Insertion
                                await transactionModel.findOneAndUpdate(
                                     { _id: data._id },
                                     {
@@ -90,7 +80,7 @@ export default class Watcher {
             );
         }
 
-        // ✅ Step 4: Confirm Deposits and Update deposit 
+        /// ✅ Step 4: Confirm Deposits and Update deposit 
         const pendingTransactions = await transactionModel.find({
             $and: [
                 {
@@ -113,9 +103,13 @@ export default class Watcher {
                             const updateData = {
                                 txStatus: "completed",
                                 settlementStatus: "processing",
-                            };
-
-                            await updateDepositTx(updateData, { id: data._id, userId: data.userId._id, assetId: data.assetId });
+                            }
+                            const query= { 
+                                id: data._id, 
+                                userId: data.userId._id, 
+                                assetId: data.assetId 
+                            }
+                            await updateDepositTx(query,updateData);
 
                             console.log(`Deposit confirmed: ${data.txHash}`);
 
@@ -129,7 +123,7 @@ export default class Watcher {
             );
         }
 
-        // ✅ Step 5: Confirm Deposits and Update Wallet Balance
+        /// ✅ Step 5: Confirm Deposits and Update Wallet Balance
         const pendingWithdrawalTx = await transactionModel.find({
             $and: [
                 {
@@ -154,7 +148,12 @@ export default class Watcher {
                             assetId:data.assetId, 
                             amountInWei:data.amountInWei
                         }
-                        const tx1 = await updateDepositTx(updateData,balanceData, { id: data._id, userId: data.userId._id, assetId: data.assetId });
+                        const query = { 
+                            id: data._id, 
+                            userId: data.userId._id, 
+                            assetId: data.assetId 
+                        }
+                        const tx1 = await updateDepositTx(query,updateData,balanceData);
                         console.log(tx1.message);  
                     } catch (error) {
                         console.log("Error processing deposit:", error);

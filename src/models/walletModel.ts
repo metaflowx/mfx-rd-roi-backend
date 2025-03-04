@@ -69,6 +69,14 @@ const walletSchema: Schema = new Schema(
                 },
             },
         ],
+        totalBalanceInWeiUsd: {
+                type: String,
+                default: "0",
+        },
+        totalLockInWeiUsd: {
+            type: String,
+            default: "0",
+        }
     },
     { timestamps: true } 
 )

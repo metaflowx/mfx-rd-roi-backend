@@ -34,7 +34,7 @@ const TransactionSchema: Schema = new Schema({
   remarks: {
     type: String,
   },
-  txHash: { type: String, unique:true },
+  txHash: { type: String, unique:true,required:true},
 },{ timestamps: true })
 
 // TransactionSchema.index({ userId: 1, assetId: 1, txType: 1 });

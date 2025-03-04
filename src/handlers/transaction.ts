@@ -6,11 +6,13 @@ import UserModel from "../models/userModel";
 import { comparePassword } from "../utils";
 import transactionModel from "../models/transactionModel";
 import { updateWalletBalance } from "../repositories/wallet";
+import { randomUUIDv7 } from "bun";
 
 
 
 export const txRequestForDeposit = async (c: Context) => {
-    const { userId, assetId } = c.req.query();
+    const user = c.get('user');
+    const { assetId } = c.req.query();
     try {
 
         const asset = await AssetsModel.findById({ _id: assetId, depositEnabled: true });
@@ -18,19 +20,20 @@ export const txRequestForDeposit = async (c: Context) => {
             return c.json({ message: 'Asset not allowed for deposit' }, 400);
         }
 
-        const wallet = await WalletModel.findOne({ userId });
+        const wallet = await WalletModel.findOne({ userId:user._id });
         if (!wallet) {
             return c.json({ message: 'Wallet not found' }, 404);
         }
         const tx = await transactionModel.create({
-            userId: userId,
+            userId: user._id,
             assetId: assetId,
             txType: 'deposit',
+            txHash: randomUUIDv7('hex')
         })
         return c.json({
             txId: tx._id,
             asset: asset,
-            depositAddress: wallet.address,
+            depositAddress: wallet.address
         });
     } catch (error) {
         return c.json({ message: 'Error fetching deposit details', error }, 500);
@@ -154,11 +157,11 @@ export const updateTx = async (req: any, query?: any) => {
     }
 }
 
-export const updateDepositTx = async (depositReq: any,balanceReq?:any, query?: any) => {
+export const updateDepositTx = async (query: any,depositReq: any,balanceReq?:any) => {
     try {
 
         /// Check if transaction exists
-        const existingTx = await TransactionModel.findOne({ _id: query?.id });
+        const existingTx = await TransactionModel.findOne({ _id: query.id });
 
         if (!existingTx) {
             console.error('Transaction does not exist. Skipping update.');
@@ -188,9 +191,9 @@ export const updateDepositTx = async (depositReq: any,balanceReq?:any, query?: a
 };
 
 
-export const updateWithdrawalTx = async (req: any) => {
+export const updateWithdrawalTx = async (query:any,req: any) => {
     try {
-        const withdrawalTx = await TransactionModel.findOne({ txType: 'withdrawal' });
+        const withdrawalTx = await TransactionModel.findOne({ _id: query.id });
         if (!withdrawalTx) return;
         const updatedTx = await TransactionModel
             .findByIdAndUpdate(withdrawalTx._id, { set: req }, { new: true });
