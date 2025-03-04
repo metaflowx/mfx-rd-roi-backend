@@ -34,8 +34,6 @@ export default class Watcher {
             ]
         }).populate("userId").populate("assetId");
 
-        console.log(dbData);
-        
 
         if (dbData.length > 0) {
             await Promise.all(
@@ -50,16 +48,17 @@ export default class Watcher {
                             ? parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 value)')
                             : parseAbiItem('event LogTransfer(address indexed token,address indexed from,address indexed to,uint256 amount,uint256 input1,uint256 input2,uint256 output1,uint256 output2)'),
                         args: { to: userWallet.address as Address },
-                        fromBlock: blockNumber - BigInt(101),
+                        fromBlock: blockNumber - BigInt(2000),
                         toBlock: blockNumber
                     });
-
+                    console.log({logs});
+                    
                     if (logs.length > 0) {
                         await Promise.all(logs.map(async (log: any) => {
                             try {
                                 // ✅ Step 3: Prevent Duplicate Transaction Insertion
-                                await transactionModel.findOneAndUpdate(
-                                    { txHash: log.transactionHash },
+                               await transactionModel.findOneAndUpdate(
+                                    { _id: data._id },
                                     {
                                         $set: {
                                             amountInWei: asset.assetAddress !== '0x0000000000000000000000000000000000001010'
@@ -67,15 +66,18 @@ export default class Watcher {
                                                 : log.args.amount.toString(),
                                             userId: data.userId._id,
                                             assetId: data.assetId._id,
+                                            txHash: log.transactionHash.toString(),
                                             txStatus: "processing"
                                         }
                                     },
-                                    { upsert: true, new: true }
-                                );
+                                    { upsert: false, new: true }
+                                )
 
-                                console.log(`Transaction added: ${log.transactionHash}`);
+
+                                console.log(`Transaction added:`);
 
                             } catch (error: any) {
+                                console.log({error});
                                 if (error.code === 11000) {
                                     console.log(`Duplicate transaction skipped: ${log.transactionHash}`);
                                 } else {
@@ -88,14 +90,14 @@ export default class Watcher {
             );
         }
 
-        // ✅ Step 4: Confirm Deposits and Update Wallet Balance
+        // ✅ Step 4: Confirm Deposits and Update deposit 
         const pendingTransactions = await transactionModel.find({
             $and: [
                 {
                     txStatus: "processing",
                     settlementStatus: "pending",
-                    txHash: { $ne: "0x" },
-                    txType: "deposit"
+                    txType: 'deposit'
+
                 }
             ]
         }).populate("userId").populate("assetId");
@@ -110,17 +112,13 @@ export default class Watcher {
                         if (tx.status === "success") {
                             const updateData = {
                                 txStatus: "completed",
-                                settlementStatus: "completed",
-                                remarks: "Deposit Successfully"
+                                settlementStatus: "processing",
                             };
 
                             await updateDepositTx(updateData, { id: data._id, userId: data.userId._id, assetId: data.assetId });
 
                             console.log(`Deposit confirmed: ${data.txHash}`);
 
-                            await updateWalletBalance(data.userId._id, data.assetId, data.amountInWei);
-
-                            console.log(`Wallet balance updated for ${data.userId._id}`);
                         } else {
                             console.log(`Deposit failed: ${data.txHash}`);
                         }
@@ -130,6 +128,41 @@ export default class Watcher {
                 })
             );
         }
+
+        // ✅ Step 5: Confirm Deposits and Update Wallet Balance
+        const pendingWithdrawalTx = await transactionModel.find({
+            $and: [
+                {
+                    txStatus: "completed",
+                    settlementStatus: "processing",
+                    txType: "deposit"
+                }
+            ]
+        }).populate("userId").populate("assetId");
+        console.log({ pendingWithdrawalTx });
+
+        if (pendingWithdrawalTx.length > 0) {
+            await Promise.all(
+                pendingWithdrawalTx.map(async (data: ITransaction) => {
+                    try {
+                        const updateData = {
+                            settlementStatus: "completed",
+                            remarks: "Deposit Successfully"
+                        };
+                        const balanceData ={
+                            userId:data.userId._id, 
+                            assetId:data.assetId, 
+                            amountInWei:data.amountInWei
+                        }
+                        const tx1 = await updateDepositTx(updateData,balanceData, { id: data._id, userId: data.userId._id, assetId: data.assetId });
+                        console.log(tx1.message);  
+                    } catch (error) {
+                        console.log("Error processing deposit:", error);
+                    }
+                })
+            );
+        }
+        
     }
 }
 

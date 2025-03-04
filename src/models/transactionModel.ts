@@ -29,15 +29,15 @@ const TransactionSchema: Schema = new Schema({
   settlementStatus:{
     type: String,
     default: "pending",
-    enum: ['pending', 'completed','failed'],
+    enum: ['pending','processing' ,'completed','failed'],
   },
   remarks: {
     type: String,
   },
-  txHash: { type: String, unique:true,required: true, default:"0x" },
+  txHash: { type: String, unique:true },
 },{ timestamps: true })
 
-TransactionSchema.index({ userId: 1, assetId: 1, txType: 1 });
+// TransactionSchema.index({ userId: 1, assetId: 1, txType: 1 });
 
 
 export default mongoose.model<ITransaction>('Transaction', TransactionSchema);

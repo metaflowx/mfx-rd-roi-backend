@@ -6,9 +6,6 @@ export interface IUser extends Document {
     role: string;
     walletAddress: string;
     password: string;
-    membershipPackage?: string;
-    totalPackage: number; 
-    totalEarnings: number;
     status:string;
   }
   
@@ -20,18 +17,6 @@ export interface IUser extends Document {
       },
       mobileNumber: {
         type: String,
-      },
-      membershipPackage: {
-        type: String,
-        default: null
-      },
-      totalPackage: {
-          type: Number,
-          default: 0
-      },
-      totalEarnings: {
-          type: Number,
-          default: 0
       },
       role: {
         type: String,

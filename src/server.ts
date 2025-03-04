@@ -91,7 +91,7 @@ if (process.env.ROLE === 'Watcher') {
     // })
 
     // cron job for network one run every 50 second
-    cron.schedule("*/60 * * * * *", async () => {
+    cron.schedule("*/30 * * * * *", async () => {
       const depositWatcherOne = new Watcher(
         "amoy"
       )

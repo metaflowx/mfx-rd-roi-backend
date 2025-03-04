@@ -5,6 +5,7 @@ import TransactionModel from "../models/transactionModel";
 import UserModel from "../models/userModel";
 import { comparePassword } from "../utils";
 import transactionModel from "../models/transactionModel";
+import { updateWalletBalance } from "../repositories/wallet";
 
 
 
@@ -153,45 +154,39 @@ export const updateTx = async (req: any, query?: any) => {
     }
 }
 
-export const updateDepositTx = async (req: any, query?: any): Promise<boolean> => {
+export const updateDepositTx = async (depositReq: any,balanceReq?:any, query?: any) => {
     try {
 
-        // /// Check if transaction already exists
-        console.log(query.id);
-        
-        const existingTx = await TransactionModel.findOne({ _id: query.id });
-
-        console.log("Existing Transaction:", existingTx);
+        /// Check if transaction exists
+        const existingTx = await TransactionModel.findOne({ _id: query?.id });
 
         if (!existingTx) {
             console.error('Transaction does not exist. Skipping update.');
-            return false;
+            return { success: false, message: 'Transaction not found' };
         }
-
-        if (existingTx.txHash && existingTx.txHash === req.txHash) {
-            console.log(`Transaction ${req.txHash} is already updated. Skipping.`)
-            return false;
-        }
-
-        /// Update the transaction within the transaction session
+        /// Update the transaction
         const updatedTx = await TransactionModel.findByIdAndUpdate(
-            { _id: query.id,txHash: { $ne: req.txHash } },
-            { $set: req },
+            query.id,
+            { $set: depositReq },
             { new: true, upsert: false }
         );
 
         if (!updatedTx) {
-            console.error('Transaction not found or update failed');
-            return false;
+            return { success: false, message: 'Transaction update failed' };
         }
 
         console.log('Deposit Tx updated:', updatedTx);
-        return true;
+        if(Number(balanceReq.amountInWei)>0){
+            await updateWalletBalance(balanceReq.userId,balanceReq.assetId,balanceReq.amountInWei)
+        }
+        
+        return { success: true, message: 'Transaction updated successfully', data: updatedTx };
     } catch (error) {
         console.error('Error in updateDepositTx:', error);
-        return false;
+        return { success: false, message: 'Internal server error', error };
     }
 };
+
 
 export const updateWithdrawalTx = async (req: any) => {
     try {

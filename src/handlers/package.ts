@@ -134,13 +134,6 @@ export const buyPackagePlan = async (c: Context) => {
         // ✅ Distribute referral rewards
         await distributeReferralRewards(user._id as Types.ObjectId, packageData.amount);
 
-        // ✅ Update user package details
-        user.membershipPackage = packageData.name;
-        user.totalPackage += packageData.amount; // Add to total package amount
-
-        console.log("user=====>>>",user)
-        // await user.save(); // Save updated user data
-
         return c.json({
             message: "Package plan purchased successfully",
             user
