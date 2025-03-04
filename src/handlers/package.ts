@@ -8,10 +8,10 @@ import { distributeReferralRewards } from '../repositories/referral'; // Import 
 // **1. Add Package Package**
 export const addPackage = async (c: Context) => {
     try {
-        const { name, amount, dailyEarnings, durationInDays, totalReturns, bonus } = await c.req.json();
+        const { name, amount, dailyEarnings,description, durationInDays, totalReturns, bonus } = await c.req.json();
 
         // Validate input
-        if (!name || !amount || !dailyEarnings || !durationInDays || !totalReturns || !bonus) {
+        if (!name || !amount || !dailyEarnings || !durationInDays || !totalReturns || !bonus || !description) {
             return c.json({ message: 'All fields are required' }, 400);
         }
 
@@ -25,6 +25,7 @@ export const addPackage = async (c: Context) => {
         const newPackage = await PackageModel.create({
             name,
             amount,
+            description,
             dailyEarnings,
             durationInDays,
             totalReturns,

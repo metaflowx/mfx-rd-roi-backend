@@ -37,4 +37,7 @@ const TransactionSchema: Schema = new Schema({
   txHash: { type: String, unique:true,required: true, default:"0x" },
 },{ timestamps: true })
 
+TransactionSchema.index({ userId: 1, assetId: 1, txType: 1 });
+
+
 export default mongoose.model<ITransaction>('Transaction', TransactionSchema);

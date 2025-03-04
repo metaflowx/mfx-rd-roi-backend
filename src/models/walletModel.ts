@@ -12,8 +12,6 @@ export interface IWallet extends Document {
         balance: string
         lock: string
     }>
-    totalBalanceWeiInUsd: string
-    freezBalanceWeiInUsd: string
     createdAt: Date
     updatedAt: Date
 }

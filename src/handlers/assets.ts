@@ -4,10 +4,10 @@ import { getAssetPriceInUSD } from "../services/assetPriceFromCoingecko";
 
 export const addAsset = async (c: Context) => {
     try {
-        const { chainId, assetAddress, assetType, name, symbol, depositEnabled, withdrawalEnabled,withdrawalFee } = await c.req.json();
+        const { chainId, assetAddress, assetType,coinGeckoId, name, symbol, depositEnabled, withdrawalEnabled,withdrawalFee } = await c.req.json();
 
         /// Validate 
-        if (!chainId || !assetAddress || !assetType || !name || !symbol) {
+        if (!chainId || !assetAddress || !assetType || !name || !symbol || !coinGeckoId) {
             return c.json({ message: 'All fields are required' }, 400);
         }
 
@@ -22,6 +22,7 @@ export const addAsset = async (c: Context) => {
             chainId,
             assetAddress,
             assetType,
+            coinGeckoId,
             name,
             symbol,
             depositEnabled,
