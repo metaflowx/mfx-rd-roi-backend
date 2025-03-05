@@ -1,6 +1,9 @@
 import { Context } from 'hono';
 import ReferralEarnings from '../models/referralModel';
+import WalletModel from '../models/walletModel';
+import mongoose from 'mongoose';
 import dotenv from "dotenv";
+import { formatUnits } from "viem";
 
 dotenv.config();
 
@@ -28,17 +31,39 @@ export const getReferralStats = async (c: Context) => {
     //   const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
     //   return level.earnings || 0; // If earnings are stored per transaction, you need to filter them by today's date
     // };
-    
-    // Compute stats for each level
-    const levelStats = Object.entries(levels).reduce((acc, [levelName , level]) => {
-      acc[levelName] = {
-        totalHeadcount: Number(level.count) || 0,
-        teamTopUp: 0.00, // Define how to calculate this
-        totalReturn: Number(level.earnings) || 0,
-        // todaysEarnings: getTodaysEarnings(level),
+
+     // Function to fetch total balance (teamTopUp) from Wallet model for a list of userIds
+     const getTeamTopUp = async (userIds: mongoose.Types.ObjectId[]) => {
+      if (userIds.length === 0) return 0.00; // No referrals at this level
+      const wallets = await WalletModel.find({ userId: { $in: userIds } }); // Find wallets for users
+      return wallets.reduce((sum, wallet) => {
+        const deposit = wallet.totalDepositInWeiUsd ? Number(formatUnits(BigInt(wallet.totalDepositInWeiUsd.toString()), 18)) : 0;
+        return sum + deposit;}, 0);    
       };
-      return acc;
-    }, {});
+    
+    // // Compute stats for each level
+    // const levelStats = Object.entries(levels).reduce((acc, [levelName , level]) => {
+    //   acc[levelName] = {
+    //     totalHeadcount: Number(level.count) || 0,
+    //     teamTopUp: 0.00, // Define how to calculate this
+    //     totalReturn: Number(level.earnings) || 0,
+    //     // todaysEarnings: getTodaysEarnings(level),
+    //   };
+    //   return acc;
+    // }, {});
+
+     // Compute stats for each level
+     const levelStats = {};
+     for (const [levelName, level] of Object.entries(levels)) {
+       const teamTopUp = await getTeamTopUp(level.referrals || []); // Get team top-up
+ 
+       levelStats[levelName] = {
+         totalHeadcount: Number(level.count) || 0,
+         teamTopUp: teamTopUp.toFixed(2), 
+         totalReturn: Number(level.earnings) || 0,
+         todaysEarnings: 0, // Adjust logic if needed
+       };
+     }
     
     return c.json({
       message: 'Referral stats fetched successfully',
