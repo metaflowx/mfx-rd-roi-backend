@@ -2,7 +2,7 @@ import { EVMWalletService, chainToChainId } from "./evmWallet";
 import { Address, Chain, erc20Abi, formatEther, formatGwei, parseGwei } from "viem";
 import transactionModel, { ITransaction } from "../models/transactionModel";
 import { privateKeyToAccount } from "viem/accounts";
-import { accessTokenPublicKey, hybridDecrypt } from "../utils/cryptography";
+import { accessTokenPrivateKey, hybridDecrypt } from "../utils/cryptography";
 import walletModel, { IWallet } from "../models/walletModel";
 import assetsModel, { IAsset } from "../models/assetsModel";
 
@@ -33,12 +33,11 @@ export default class Balance {
             })
         const adminId = `${Bun.env.ADMIN}`
         const coldWallet = await walletModel.findOne({ userId: adminId }) as IWallet
-        const coldkey = hybridDecrypt(accessTokenPublicKey, coldWallet.encryptedPrivateKey, coldWallet.encryptedSymmetricKey, adminId, coldWallet.salt)
+        const coldkey = hybridDecrypt(accessTokenPrivateKey, coldWallet.encryptedPrivateKey, coldWallet.encryptedSymmetricKey, adminId, coldWallet.salt)
         const coldNetwork = new EVMWalletService(this.chain, coldkey as Address)
         const coldWalletClient = coldNetwork.getWalletClient()
         const coldPublicClient = coldNetwork.getPublicClient()
         const coldWalletAccount = coldNetwork.getAccount()
-        console.log("completed data length", dbData.length)
 
         if (dbData.length > 0) {
             Promise.all(
@@ -57,7 +56,7 @@ export default class Balance {
                         })
                         console.log(`Token Balance of ${userWallet.address}: ${formatEther(balance)}`)
 
-                        const key = hybridDecrypt(accessTokenPublicKey, userWallet.encryptedPrivateKey, userWallet.encryptedSymmetricKey,`${userWallet.userId}`, userWallet.salt)
+                        const key = hybridDecrypt(accessTokenPrivateKey, userWallet.encryptedPrivateKey, userWallet.encryptedSymmetricKey,`${userWallet.userId}`, userWallet.salt)
 
                         if (Number(balance) > 0 && key) {
                             const account = privateKeyToAccount(key as Address)

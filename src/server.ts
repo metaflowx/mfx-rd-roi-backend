@@ -14,6 +14,7 @@ import Watcher from "./services/watcher";
 import Sender from "./services/sender";
 import { Address } from "viem";
 import { scheduler } from "timers/promises";
+import Balance from "./services/balance";
 
 const app = new Hono().basePath("/api");
 
@@ -83,19 +84,28 @@ if (process.env.ROLE === 'Watcher') {
   /// Watcher
   try {
     /// cron job for network one run every 20 second
-    // cron.schedule("*/25 * * * * *", async () => {
-    //   const depositWatcherOne = new Watcher(
-    //     "bsc"
-    //   )
-    //   await depositWatcherOne.evmWorker("EVM-BSC-Watcher-1")
-    // })
-
-    // cron job for network one run every 50 second
     cron.schedule("*/30 * * * * *", async () => {
+      const depositWatcherOne = new Watcher(
+        "bsc"
+      )
+      await depositWatcherOne.evmWorker("EVM-BSC-Watcher-1")
+    })
+
+    /// cron job for network one run every 50 second
+    cron.schedule("*/45 * * * * *", async () => {
+      const depositWatcherOne = new Watcher(
+        "polygon"
+      )
+      await depositWatcherOne.evmWorker("EVM-Ploygon-Watcher-1")
+    })
+
+    /// will remove after testing
+    /// cron job for network one run every 20 second
+    cron.schedule("*/20 * * * * *", async () => {
       const depositWatcherOne = new Watcher(
         "amoy"
       )
-      await depositWatcherOne.evmWorker("EVM-Ploygon-Watcher-1")
+      await depositWatcherOne.evmWorker("EVM-Ploygon-Testnet-Watcher-1")
     })
   } catch (error) {
     console.log(error);
@@ -106,41 +116,56 @@ if (process.env.ROLE === 'Sender') {
 
   /// Sender
   try {
-    /// cron job for network one run every 20 second
-    cron.schedule("*/30 * * * * *", async () => {
-      const depositWatcherOne = new Sender(
+    /// cron job for network one run every 40 second
+    cron.schedule("*/40 * * * * *", async () => {
+      const withdrawSenderOne = new Sender(
         "bsc",
       )
-      await depositWatcherOne.evmWorker("EVM-BSC-Sender-1", process.env.PRIVATE_KEY as Address)
+      await withdrawSenderOne.evmWorker("EVM-BSC-Sender-1")
     })
 
-    /// cron job for network one run every 40 second
-    cron.schedule("*/75 * * * * *", async () => {
-      const depositWatcherOne = new Sender(
+    /// cron job for network one run every 60 second
+    cron.schedule("*/60 * * * * *", async () => {
+      const withdrawSenderOne = new Sender(
         "polygon"
       )
-      await depositWatcherOne.evmWorker("EVM-Polygon-Sender-1", process.env.PRIVATE_KEY as Address)
+      await withdrawSenderOne.evmWorker("EVM-Polygon-Sender-1")
     })
 
-
+    /// will remove after testing
+    /// cron job for network one run every 40 second
+    cron.schedule("*/30 * * * * *", async () => {
+      const withdrawSenderOne = new Sender(
+        "amoy"
+      )
+      await withdrawSenderOne.evmWorker("EVM-Polygon-Testnet-Sender-1")
+    })
 
     /// Balance
 
-    // // cron job for network one run every 5 mins
-    // cron.schedule("*/5 * * * *", async () => {
-    //     const depositWatcherOne = new Balance(
-    //         "bsc",
-    //     )
-    //     await depositWatcherOne.evmWorker("EVM-BSC-Balance-1",process.env.PRIVATE_KEY as Address)
-    // })
+    /// cron job for network one run every 5 mins
+    cron.schedule("*/5 * * * *", async () => {
+      const depositWatcherOne = new Balance(
+        "bsc",
+      )
+      await depositWatcherOne.evmWorker("EVM-BSC-Balance-1")
+    })
 
-    // // cron job for network one run every 7 mins
-    // cron.schedule("*/7 * * * *", async () => {
-    //     const depositWatcherOne = new Balance(
-    //         "ramestta",
-    //     )
-    //     await depositWatcherOne.evmWorker("EVM-Ramestta-Balance-1",process.env.PRIVATE_KEY as Address)
-    // })
+    /// cron job for network one run every 7 mins
+    cron.schedule("*/7 * * * *", async () => {
+      const depositWatcherOne = new Balance(
+        "polygon",
+      )
+      await depositWatcherOne.evmWorker("EVM-Polygon-Balance-1")
+    })
+
+    /// cron job for network one run every 10 mins
+    cron.schedule("*/10 * * * *", async () => {
+      const depositWatcherOne = new Balance(
+        "amoy",
+      )
+      await depositWatcherOne.evmWorker("EVM-Polygon-Testnet-Balance-1")
+    })
   } catch (error) {
     console.log(error);
 

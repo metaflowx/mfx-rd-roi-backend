@@ -33,7 +33,7 @@ export default class Sender {
         const network = new EVMWalletService(this.chain, key as Address)
         const walletClient = network.getWalletClient()
         const publicClient = network.getPublicClient()
-        const account = privateKeyToAccount(privateKey as Address)
+        const account = privateKeyToAccount(key as Address)
 
         if (dbData1.length > 0) {
             Promise.all(

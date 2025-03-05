@@ -12,10 +12,10 @@ import { updateWalletBalance } from '../repositories/wallet';
 // **1. Add Package Package**
 export const addPackage = async (c: Context) => {
     try {
-        const { name, amount, dailyEarnings,dailyBonus,description, durationInDays, totalReturns,totalBonus } = await c.req.json();
+        const { name, amount, dailyEarnings,dailyBonus,requiredTask,description, durationInDays, totalReturns,totalBonus } = await c.req.json();
 
         // Validate input
-        if (!name || !amount || !dailyEarnings || !dailyBonus || !durationInDays || !totalReturns || !totalBonus || !description) {
+        if (!name || !amount || !dailyEarnings || !dailyBonus || !durationInDays || !totalReturns || !totalBonus || !description || !requiredTask) {
             return c.json({ message: 'All fields are required' }, 400);
         }
 
@@ -30,6 +30,7 @@ export const addPackage = async (c: Context) => {
             name,
             amount,
             description,
+            requiredTask,
             dailyEarnings,
             dailyBonus,
             durationInDays,
@@ -139,8 +140,8 @@ export const buyPackagePlan = async (c: Context) => {
             return c.json({ message: investmentResponse.message }, 400);
         }
 
-        await updateWalletBalance(userData._id,`-${parseEther(packageData.amount.toString())}`)
- 
+        wallet.totalBalanceInWeiUsd = (parseFloat(wallet.totalBalanceInWeiUsd ) - parseFloat(parseEther(packageData.amount.toString()).toString())).toString()
+        await wallet.save()
         /// ✅ Distribute referral rewards
         await distributeReferralRewards(userData._id as Types.ObjectId, packageData.amount);
 

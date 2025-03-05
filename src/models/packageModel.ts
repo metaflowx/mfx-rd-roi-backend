@@ -8,6 +8,7 @@ export interface IPackage extends Document {
     durationInDays: number;
     totalReturns: number;
     totalBonus: number;
+    requiredTask: number
     description: string;
 }
 
@@ -39,6 +40,10 @@ const packageSchema: Schema = new Schema(
             required: true 
         },
         totalBonus: { 
+            type: Number, 
+            required: true 
+        },
+        requiredTask: { 
             type: Number, 
             required: true 
         },
