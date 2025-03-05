@@ -30,7 +30,7 @@ export const addReferral = async ({userId, referrerBy, referralCode}:{userId:any
         // Update referrer stats for Level 1
         const referrer = await ReferralEarnings.findOneAndUpdate(
             { userId: referrerBy },
-            { $inc: { 'referralStats.levels.level1.count': 1 }, $push: { referrals: userId } },
+            { $inc: { 'referralStats.levels.level1.count': 1 }, $push: { 'referralStats.levels.level1.referrals': userId } },
             { new: true }
         );
 
@@ -41,7 +41,7 @@ export const addReferral = async ({userId, referrerBy, referralCode}:{userId:any
         // Handle Level 2 Referral (Referrer’s referrer)
         const referrerLevel2 = await ReferralEarnings.findOneAndUpdate(
             { userId: referrer.referrerBy }, 
-            { $inc: { 'referralStats.levels.level2.count': 1 },  $push: { referrals: userId }},
+            { $inc: { 'referralStats.levels.level2.count': 1 }, $push: { 'referralStats.levels.level2.referrals': userId }},
             { new: true }
         );
 
@@ -49,7 +49,7 @@ export const addReferral = async ({userId, referrerBy, referralCode}:{userId:any
         if (referrerLevel2 && referrerLevel2.referrerBy) {
             await ReferralEarnings.findOneAndUpdate(
                 { userId: referrerLevel2.referrerBy }, 
-                { $inc: { 'referralStats.levels.level3.count': 1 }, $push: { referrals: userId } },
+                { $inc: { 'referralStats.levels.level3.count': 1 }, $push: { 'referralStats.levels.level3.referrals': userId } },
                 { new: true }
             );
         }

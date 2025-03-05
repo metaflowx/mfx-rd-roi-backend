@@ -1,21 +1,27 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+export interface IReferralLevel {
+  referrals: mongoose.Schema.Types.ObjectId[]; // Array to store user IDs
+  count: number;
+  earnings: number;
+  activeCount: number;
+}
+
+export interface IReferralStats {
+  levels: {
+    level1: IReferralLevel;
+    level2: IReferralLevel;
+    level3: IReferralLevel;
+  };
+}
 
 
 export interface IReferralEarnings extends Document {
   userId: mongoose.Schema.Types.ObjectId;
   referrerBy: mongoose.Schema.Types.ObjectId;
   referralCode:string;
-  referralStats: {
-    level1Count: number;
-    level2Count: number;
-    level3Count: number;
-    level1Earnings: number;
-    level2Earnings: number;
-    level3Earnings: number;
-  };
+  referralStats: IReferralStats;
   totalEarnings: number;
-  referralEarningsHistory: [];
   enableReferral: boolean;
 
 }
@@ -42,23 +48,22 @@ const referralEarningsSchema: Schema = new Schema(
       levels: {
         type: Map,
         of: new Schema({
+          referrals: [
+            {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "User",
+            },
+          ],
           count: { type: Number, default: 0 },
-          earnings: { type: Number, default: 0 },
-          activeCount: { type: Number, default: 0 }
+          earnings: { type: Number, default: 0 }
         }),
         default: {
-          level1: { count: 0, earnings: 0,activeCount:0 },
-          level2: { count: 0, earnings: 0 ,activeCount:0 },
-          level3: { count: 0, earnings: 0 ,activeCount:0},
+          level1: { count: 0, earnings: 0 },
+          level2: { count: 0, earnings: 0  },
+          level3: { count: 0, earnings: 0 },
         },
       },
     },
-    referrals: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
     enableReferral:{
       type: Boolean,
       default:true

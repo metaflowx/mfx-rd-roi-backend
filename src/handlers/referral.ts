@@ -17,10 +17,41 @@ export const getReferralStats = async (c: Context) => {
       return c.json({message: 'No referral stats found' }, 404);
     }
 
-    return c.json({ message: 'Fetch referral state successfully', data: referralStats },200);
+    const levelsMap = referralStats.referralStats.levels || new Map();
+    const levels = Object.fromEntries(levelsMap); // Convert Map to Object
+    
+    console.log('Converted Levels:', levels); // Debugging log
+    
+    // // Function to calculate today's earnings
+    // const getTodaysEarnings = (level) => {
+    //   // Assuming `earnings` are logged per day (You might need to adjust this logic)
+    //   const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+    //   return level.earnings || 0; // If earnings are stored per transaction, you need to filter them by today's date
+    // };
+    
+    // Compute stats for each level
+    const levelStats = Object.entries(levels).reduce((acc, [levelName , level]) => {
+      acc[levelName] = {
+        totalHeadcount: Number(level.count) || 0,
+        teamTopUp: 0.00, // Define how to calculate this
+        totalReturn: Number(level.earnings) || 0,
+        // todaysEarnings: getTodaysEarnings(level),
+      };
+      return acc;
+    }, {});
+    
+    return c.json({
+      message: 'Referral stats fetched successfully',
+      data: {
+        referralStats,
+        levelStats
+      }
+    }, 200);
+    
   } catch (error) {
     return c.json({ message: 'Server error', error }, 500);
 }
+
 };
 
 /**
