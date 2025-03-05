@@ -1,7 +1,7 @@
 import walletModel, { IWallet } from "../models/walletModel";
 import { getAssetPriceInUSD } from "../services/assetPriceFromCoingecko";
 import assetsModel, { IAsset } from "../models/assetsModel";
-import { formatUnits, parseUnits } from "viem";
+import { formatUnits, parseEther, parseUnits } from "viem";
 import mongoose, { ClientSession, Schema, Types } from "mongoose";
 
 /// Function to update wallet balance with transactions
@@ -22,7 +22,11 @@ export const updateWalletBalance = async (
     /// In case of deposit
     if (assetId) {
       /// If the asset exists, update its balance
-      const asset = wallet.assets.find((asset) => asset.assetId.equals(assetId));
+      const asset = wallet.assets.find((asset) => asset.assetId.equals(assetId)) as {assetId: Types.ObjectId,balance:string}
+      const assetPriceInUsd = await getUserBalanceAtAsset(userId.toString(), assetId)
+      /// Convert balance 
+      let balanceInUSD = parseFloat(parseEther(asset.balance).toString()) * Number(assetPriceInUsd)
+      balanceInUSD = parseFloat(parseEther(balanceInUSD.toString()).toString())
       if (asset) {
         const currentBalance = parseFloat(asset.balance);
         const change = parseFloat(balanceChangeInWei);
@@ -41,15 +45,16 @@ export const updateWalletBalance = async (
           },
         );
       }
+      wallet.totalBalanceInWeiUsd = (parseFloat(wallet.totalBalanceInWeiUsd) + balanceInUSD).toString()
+    } else {
+      wallet.totalBalanceInWeiUsd = (parseFloat(wallet.totalBalanceInWeiUsd) + parseFloat(balanceChangeInWei)).toString()
     }
-
-    wallet.totalBalanceInWeiUsd = (parseFloat(wallet.totalBalanceInWeiUsd) + parseFloat(balanceChangeInWei)).toString()
     await wallet.save(); // Save the updated wallet within the transaction
     console.log('Wallet balance updated successfully');
     return true;
   } catch (error) {
     console.error('Error updating wallet balance:', error);
-    throw error; // Throw error to trigger transaction rollback
+    throw error; /// Throw error to trigger transaction rollback
   }
 };
 
@@ -73,7 +78,7 @@ export const getUserBalanceAtAsset = async (
     const assetData = await assetsModel.findOne({ _id: asset.assetId }) as IAsset;
     const assetPriceInUSD = await getAssetPriceInUSD(assetData.coinGeckoId);
 
-    /// Convert balance and lock to USD
+    /// Convert balance 
     let balanceInUSD = Number(formatUnits(BigInt(asset.balance), assetData.decimals)) * Number(assetPriceInUSD)
     balanceInUSD = Number(parseUnits(balanceInUSD.toString(), assetData.decimals))
 
