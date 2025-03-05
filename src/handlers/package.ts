@@ -1,9 +1,12 @@
 import { Context } from 'hono';
 import PackageModel from '../models/packageModel'; 
 import UserModel from '../models/userModel'; 
+import walletModel from '../models/walletModel'; 
 import mongoose, { Schema, Document, Types } from 'mongoose';
 import { addInvestment } from '../repositories/investment'; // Import function
 import { distributeReferralRewards } from '../repositories/referral'; // Import the function
+import { formatUnits, parseUnits } from "viem";
+
 
 // **1. Add Package Package**
 export const addPackage = async (c: Context) => {
@@ -106,39 +109,39 @@ export const getPackages = async (c: Context) => {
 export const buyPackagePlan = async (c: Context) => {
     try {
         const userData = c.get('user'); 
-        console.log("userData======>>>",userData)
         const {packageId } = await c.req.json();
 
         /// ✅ Validate request body
         if (!userData._id || !packageId) {
-            return c.json({ message: "User ID and Package ID are required" }, 400);
+            return c.json({ message: "User ID and Package ID are required." }, 400);
         }
-
-        /// ✅ Check if user exists
-        const user = await UserModel.findById(userData._id);
-        if (!user) {
-            return c.json({ message: "User not found" }, 404);
-        }
-
+        
         /// ✅ Check if  package exists
         const packageData = await PackageModel.findById(packageId);
         if (!packageData) {
-            return c.json({ message: "Package not found" }, 404);
+            return c.json({ message: "Package not found." }, 404);
+        }
+
+        /// ✅ Check if user exists
+        const wallet = await walletModel.findOne({userId: userData._id})
+        if (!wallet) {
+            return c.json({ message: "User wallet not found." }, 404);
+        }
+
+        if (packageData.amount > parseFloat(formatUnits(BigInt(wallet.totalBalanceInWeiUsd), 18))) {
+            return c.json({ message: "Insufficient balance." }, 400);
         }
 
         /// ✅ Call investment function (Prevents duplicate purchases)
-        const investmentResponse = await addInvestment(user._id as Types.ObjectId, packageId);
+        const investmentResponse = await addInvestment(userData._id as Types.ObjectId, packageId);
         if (!investmentResponse.success) {
             return c.json({ message: investmentResponse.message }, 400);
         }
  
         /// ✅ Distribute referral rewards
-        await distributeReferralRewards(user._id as Types.ObjectId, packageData.amount);
+        await distributeReferralRewards(userData._id as Types.ObjectId, packageData.amount);
 
-        return c.json({
-            message: "Package plan purchased successfully",
-            user
-        }, 200);
+        return c.json({ message: "Package plan purchased successfully"}, 200);
 
     } catch (error) {
         console.error("Server error:", error);

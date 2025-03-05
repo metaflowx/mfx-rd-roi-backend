@@ -8,6 +8,7 @@ import transactionModel from "../models/transactionModel";
 import { updateWalletBalance } from "../repositories/wallet";
 import { randomUUIDv7 } from "bun";
 import { parseEther } from "viem";
+import { formatUnits, parseUnits } from "viem";
 
 
 
@@ -72,6 +73,15 @@ export const txRequestForWithdrawal = async (c: Context) => {
     const user = c.get('user');
     try {
 
+        const wallet = await WalletModel.findOne({userId: user._id})
+        if (!wallet) {
+            return c.json({ message: "User wallet not found." }, 404);
+        }
+        if (withdrawalAmount == 0) return c.json({ message: "Withdrawal amount should be greater than zero." }, 400);
+        if (withdrawalAmount > parseFloat(formatUnits(BigInt(wallet.totalBalanceInWeiUsd), 18))) {
+            return c.json({ message: "Insufficient balance." }, 400);
+        }
+        
         const asset = await AssetsModel.findById({ _id: assetId, withdrawalEnabled: true });
         if (!asset) {
             return c.json({ message: 'Asset not allowed for withdrawal' }, 400);
