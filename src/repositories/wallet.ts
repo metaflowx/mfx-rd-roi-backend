@@ -22,10 +22,10 @@ export const updateWalletBalance = async (
     /// In case of deposit
     if (assetId) {
       /// If the asset exists, update its balance
-      const asset = wallet.assets.find((asset) => asset.assetId.equals(assetId)) as {assetId: Types.ObjectId,balance:string}
-      const assetPriceInUsd = await getUserBalanceAtAsset(userId.toString(), assetId)
+      const asset = wallet.assets.find((asset) => asset.assetId.equals(assetId)) 
+      const assetPriceInUsd = await getAssetPriceInUSD(wallet.assets);
       /// Convert balance 
-      let balanceInUSD = parseFloat(parseEther(asset.balance).toString()) * Number(assetPriceInUsd)
+      let balanceInUSD = parseFloat(balanceChangeInWei)) * Number(assetPriceInUsd)
       balanceInUSD = parseFloat(parseEther(balanceInUSD.toString()).toString())
       if (asset) {
         const currentBalance = parseFloat(asset.balance);
