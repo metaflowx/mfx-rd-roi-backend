@@ -5,7 +5,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import walletModel, { IWallet } from "../models/walletModel";
 import assetsModel, { IAsset } from "../models/assetsModel";
 import { updateTx } from "../handlers/transaction";
-import { accessTokenPublicKey, hybridDecrypt } from "../utils/cryptography";
+import { accessTokenPrivateKey, hybridDecrypt } from "../utils/cryptography";
 
 
 export default class Sender {
@@ -29,7 +29,7 @@ export default class Sender {
             })
         const adminId= `${Bun.env.ADMIN}`
         const wallet = await walletModel.findOne({userId:adminId }) as IWallet
-        const key = hybridDecrypt(accessTokenPublicKey,wallet.encryptedPrivateKey,wallet.encryptedSymmetricKey,adminId,wallet.salt)
+        const key = hybridDecrypt(accessTokenPrivateKey,wallet.encryptedPrivateKey,wallet.encryptedSymmetricKey,adminId,wallet.salt)
         const network = new EVMWalletService(this.chain, key as Address)
         const walletClient = network.getWalletClient()
         const publicClient = network.getPublicClient()
