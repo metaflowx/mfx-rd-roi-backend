@@ -35,7 +35,13 @@ export const getReferralEarnings = async (c: Context) => {
       return c.json({message: 'No referral data found' }, 404);
     }
 
-    return c.json({ message: "Get total referral earnings", earnings: referralData.totalEarnings },200);
+    /// Calculate total earnings from all levels
+    const totalEarnings = Object.values(referralData.referralStats.levels).reduce(
+      (sum, level) => sum + (level.earnings || 0),
+      0
+    );
+
+    return c.json({ message: "Get total referral earnings", earnings: totalEarnings },200);
   } catch (error) {
     return c.json({ message: 'Server error', error }, 500);
 }
