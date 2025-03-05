@@ -7,38 +7,42 @@ import mongoose, { ClientSession, Schema, Types } from "mongoose";
 /// Function to update wallet balance with transactions
 export const updateWalletBalance = async (
   userId: Types.ObjectId,
-  assetId: Types.ObjectId,
   /// Positive for deposit, negative for withdrawal
-  balanceChangeInWei: string 
+  balanceChangeInWei: string,
+  assetId?: Types.ObjectId
 ) => {
   try {
     // Find the wallet and the specific asset
-    
-    const wallet = await walletModel.findOne({ userId: userId}).populate('assets.assetId')
+
+    const wallet = await walletModel.findOne({ userId: userId }).populate('assets.assetId')
     if (!wallet) {
       throw new Error('Wallet not found for the user. This should not happen!');
     }
 
-    /// If the asset exists, update its balance
-    const asset = wallet.assets.find((asset) => asset.assetId.equals(assetId));
-    if (asset) {
-      const currentBalance = parseFloat(asset.balance);
-      const change = parseFloat(balanceChangeInWei);
-      asset.balance = (currentBalance + change).toString();
-    } else {
-      /// If the asset does not exist, add it to the wallet
-      await walletModel.updateOne(
-        { userId: userId },
-        {
-          $push: {
-            assets: {
-              assetId: assetId,
-              balance: balanceChangeInWei
+    /// In case of deposit
+    if (assetId) {
+      /// If the asset exists, update its balance
+      const asset = wallet.assets.find((asset) => asset.assetId.equals(assetId));
+      if (asset) {
+        const currentBalance = parseFloat(asset.balance);
+        const change = parseFloat(balanceChangeInWei);
+        asset.balance = (currentBalance + change).toString();
+      } else {
+        /// If the asset does not exist, add it to the wallet
+        await walletModel.updateOne(
+          { userId: userId },
+          {
+            $push: {
+              assets: {
+                assetId: assetId,
+                balance: balanceChangeInWei
+              },
             },
           },
-        },
-      );
+        );
+      }
     }
+
     wallet.totalBalanceInWeiUsd = (parseFloat(wallet.totalBalanceInWeiUsd) + parseFloat(balanceChangeInWei)).toString()
     await wallet.save(); // Save the updated wallet within the transaction
     console.log('Wallet balance updated successfully');

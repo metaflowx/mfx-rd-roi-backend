@@ -56,7 +56,6 @@ export const txConfirmRequestForDeposit = async (c: Context) => {
         if (!txData) {
             return c.json({ message: 'Transaction not found' }, 404);
         }
-        console.log("lol");
         await transactionModel.updateOne({
             _id: txId
         }, { $set: { txStatus: "confirmed" } }, { new: true });
@@ -103,7 +102,7 @@ export const txRequestForWithdrawal = async (c: Context) => {
             amountInWei: parseEther(withdrawalAmount).toString(),
         })
         if(tx){
-            await updateWalletBalance(user._id,assetId,`-${parseEther(withdrawalAmount)}`)
+            await updateWalletBalance(user._id,`-${parseEther(withdrawalAmount)}`,assetId)
             return c.json({ message: 'Withdrawal request sent successfully', data: tx }, 201);
         }
         return c.json({ message: 'Error creating withdrawal request' }, 500);
@@ -191,7 +190,7 @@ export const updateTx = async (query: any,req: any,info:Info,balanceReq?:any) =>
 
         console.log(`${info.message} Tx updated:, ${updatedTx}`);
         if(info.balance){
-            await updateWalletBalance(balanceReq.userId,balanceReq.assetId,balanceReq.amountInWei)
+            await updateWalletBalance(balanceReq.userId,balanceReq.amountInWei,balanceReq.assetId)
         }
         
         return { success: true, message: 'Transaction updated successfully', data: updatedTx };

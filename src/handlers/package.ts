@@ -5,7 +5,8 @@ import walletModel from '../models/walletModel';
 import mongoose, { Schema, Document, Types } from 'mongoose';
 import { addInvestment } from '../repositories/investment'; // Import function
 import { distributeReferralRewards } from '../repositories/referral'; // Import the function
-import { formatUnits, parseUnits } from "viem";
+import { formatUnits, parseEther, parseUnits } from "viem";
+import { updateWalletBalance } from '../repositories/wallet';
 
 
 // **1. Add Package Package**
@@ -137,6 +138,8 @@ export const buyPackagePlan = async (c: Context) => {
         if (!investmentResponse.success) {
             return c.json({ message: investmentResponse.message }, 400);
         }
+
+        await updateWalletBalance(userData._id,`-${parseEther(packageData.amount.toString())}`)
  
         /// ✅ Distribute referral rewards
         await distributeReferralRewards(userData._id as Types.ObjectId, packageData.amount);

@@ -20,7 +20,7 @@ export const userWallet = async (c: Context) => {
 export const updateWalletBalanceByAdmin = async (c: Context) => {
     const { userId, assetId, balance } = await c.req.json()
     try {
-        const data = await updateWalletBalance(userId, assetId, parseEther(balance).toString())
+        const data = await updateWalletBalance(userId, parseEther(balance).toString(),assetId)
         if (data) {
             return c.json({ message: "Balance updated successfully" }, 200)
         }
