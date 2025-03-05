@@ -102,7 +102,7 @@ export const txRequestForWithdrawal = async (c: Context) => {
             amountInWei: parseEther(withdrawalAmount).toString(),
         })
         if(tx){
-            await updateWalletBalance(user._id,`-${parseEther(withdrawalAmount)}`,assetId)
+            await updateWalletBalance(user._id,`-${parseEther(withdrawalAmount)}`)
             return c.json({ message: 'Withdrawal request sent successfully', data: tx }, 201);
         }
         return c.json({ message: 'Error creating withdrawal request' }, 500);

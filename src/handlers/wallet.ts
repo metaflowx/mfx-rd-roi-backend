@@ -10,7 +10,7 @@ import {getTotalUserBalanceAtAsset, getUserBalanceAtAsset, updateWalletBalance }
 export const userWallet = async (c: Context) => {
     const user = c.get("user")
     try {
-        const data = await walletModel.findOne({ userId: user._id }).select("-encryptedSymmetricKey -encryptedPrivateKey -salt")
+        const data = await walletModel.findOne({ userId: user._id }).populate("assets.assetId").select("-encryptedSymmetricKey -encryptedPrivateKey -salt")
         return c.json({ message: "user wallet fetching...", data: data }, 200)
     } catch (error) {
         return c.json({ message: "Error fetching balance" }, 500)
