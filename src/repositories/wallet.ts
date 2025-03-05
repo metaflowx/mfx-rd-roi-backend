@@ -1,7 +1,7 @@
 import walletModel, { IWallet } from "../models/walletModel";
 import { getAssetPriceInUSD } from "../services/assetPriceFromCoingecko";
 import assetsModel, { IAsset } from "../models/assetsModel";
-import { formatUnits, parseEther, parseUnits } from "viem";
+import { formatEther, formatUnits, parseEther, parseUnits } from "viem";
 import mongoose, { ClientSession, Schema, Types } from "mongoose";
 
 /// Function to update wallet balance with transactions
@@ -22,11 +22,9 @@ export const updateWalletBalance = async (
     /// In case of deposit
     if (assetId) {
       /// If the asset exists, update its balance
-      const asset = wallet.assets.find((asset) => asset.assetId.equals(assetId)) 
-      const assetPriceInUsd = await getAssetPriceInUSD(wallet.assets);
-      /// Convert balance 
-      let balanceInUSD = parseFloat(balanceChangeInWei)) * Number(assetPriceInUsd)
-      balanceInUSD = parseFloat(parseEther(balanceInUSD.toString()).toString())
+      const asset = wallet.assets.find((asset) => asset.assetId.equals(assetId))
+      const assetData = await assetsModel.findOne({ _id: assetId }) as IAsset;
+      const assetPriceInUsd = await getAssetPriceInUSD(assetData.coinGeckoId);
       if (asset) {
         const currentBalance = parseFloat(asset.balance);
         const change = parseFloat(balanceChangeInWei);
@@ -45,6 +43,9 @@ export const updateWalletBalance = async (
           },
         );
       }
+      /// Convert in usd 
+      let balanceInUSD = parseFloat(formatEther(BigInt(balanceChangeInWei.toString()))) * Number(assetPriceInUsd)
+      balanceInUSD = parseFloat(parseEther(balanceInUSD.toString()).toString())
       wallet.totalBalanceInWeiUsd = (parseFloat(wallet.totalBalanceInWeiUsd) + balanceInUSD).toString()
       wallet.totalDepositInWeiUsd = (parseFloat(wallet.totalDepositInWeiUsd) + balanceInUSD).toString()
     } else {
