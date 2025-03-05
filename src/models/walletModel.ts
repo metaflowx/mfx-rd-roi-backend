@@ -6,12 +6,14 @@ export interface IWallet extends Document {
     address: string
     encryptedPrivateKey: string
     encryptedSymmetricKey: string
-    salt: string 
+    salt: string
     assets: Array<{
         assetId: mongoose.Types.ObjectId
         balance: string
     }>,
     totalBalanceInWeiUsd: string,
+    totalWithdrawInWeiUsd: string,
+    totalDepositInWeiUsd: string,
     totalLockInWeiUsd: string,
     createdAt: Date
     updatedAt: Date
@@ -56,22 +58,30 @@ const walletSchema: Schema = new Schema(
                     type: String,
                     default: '0',
                     validate: {
-                        validator: (v: string) => /^\d+$/.test(v), 
+                        validator: (v: string) => /^\d+$/.test(v),
                         message: (props: any) => `${props.value} is not a valid balance!`,
                     },
                 }
             },
         ],
         totalBalanceInWeiUsd: {
-                type: String,
-                default: "0",
+            type: String,
+            default: "0",
+        },
+        totalWithdrawInWeiUsd: {
+            type: String,
+            default: "0",
+        },
+        totalDepositInWeiUsd: {
+            type: String,
+            default: "0",
         },
         totalLockInWeiUsd: {
             type: String,
             default: "0",
         }
     },
-    { timestamps: true } 
+    { timestamps: true }
 )
 
 export default mongoose.model<IWallet>('Wallet', walletSchema)
