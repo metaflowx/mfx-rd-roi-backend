@@ -7,6 +7,7 @@ import { comparePassword } from "../utils";
 import transactionModel from "../models/transactionModel";
 import { updateWalletBalance } from "../repositories/wallet";
 import { randomUUIDv7 } from "bun";
+import { parseEther } from "viem";
 
 
 
@@ -89,9 +90,13 @@ export const txRequestForWithdrawal = async (c: Context) => {
             txType: 'withdrawal',
             txHash: randomUUIDv7('hex'),
             receiverAddress: withdrawalAddress,
-            amountInWei: withdrawalAmount,
-        });
-        return c.json({ message: 'Withdrawal request created successfully', data: tx }, 201);
+            amountInWei: parseEther(withdrawalAmount).toString(),
+        })
+        if(tx){
+            await updateWalletBalance(user._id,assetId,`-${parseEther(withdrawalAmount)}`)
+            return c.json({ message: 'Withdrawal request sent successfully', data: tx }, 201);
+        }
+        return c.json({ message: 'Error creating withdrawal request' }, 500);
     } catch (error) {
         return c.json({ message: 'Error fetching withdrawal details', error }, 500);
     }
@@ -149,18 +154,13 @@ export const getTransactionList = async (c: Context) => {
         return c.json({ message: 'Error fetching transactions', error }, 500);
     }
 }
-
-export const updateTx = async (req: any, query?: any) => {
-    try {
-
-    } catch (error) {
-
-    }
+type Info = {
+    message:string,
+    balance:boolean
 }
 
-export const updateDepositTx = async (query: any,depositReq: any,balanceReq?:any) => {
+export const updateTx = async (query: any,req: any,info:Info,balanceReq?:any) => {
     try {
-
         /// Check if transaction exists
         const existingTx = await TransactionModel.findOne({ _id: query.id });
 
@@ -171,7 +171,7 @@ export const updateDepositTx = async (query: any,depositReq: any,balanceReq?:any
         /// Update the transaction
         const updatedTx = await TransactionModel.findByIdAndUpdate(
             query.id,
-            { $set: depositReq },
+            { $set: req },
             { new: true, upsert: false }
         );
 
@@ -179,8 +179,8 @@ export const updateDepositTx = async (query: any,depositReq: any,balanceReq?:any
             return { success: false, message: 'Transaction update failed' };
         }
 
-        console.log('Deposit Tx updated:', updatedTx);
-        if(Number(balanceReq.amountInWei)>0){
+        console.log(`${info.message} Tx updated:, ${updatedTx}`);
+        if(info.balance){
             await updateWalletBalance(balanceReq.userId,balanceReq.assetId,balanceReq.amountInWei)
         }
         
@@ -189,21 +189,7 @@ export const updateDepositTx = async (query: any,depositReq: any,balanceReq?:any
         console.error('Error in updateDepositTx:', error);
         return { success: false, message: 'Internal server error', error };
     }
-};
-
-
-export const updateWithdrawalTx = async (query:any,req: any) => {
-    try {
-        const withdrawalTx = await TransactionModel.findOne({ _id: query.id });
-        if (!withdrawalTx) return;
-        const updatedTx = await TransactionModel
-            .findByIdAndUpdate(withdrawalTx._id, { set: req }, { new: true });
-        console.log('Withdrawal Tx updated:', updatedTx);
-        return updatedTx
-
-    } catch (error) {
-        console.log({ error });
-    }
 }
+
 
 

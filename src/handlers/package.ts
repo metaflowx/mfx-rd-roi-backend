@@ -8,10 +8,10 @@ import { distributeReferralRewards } from '../repositories/referral'; // Import 
 // **1. Add Package Package**
 export const addPackage = async (c: Context) => {
     try {
-        const { name, amount, dailyEarnings,description, durationInDays, totalReturns, bonus } = await c.req.json();
+        const { name, amount, dailyEarnings,dailyBonus,description, durationInDays, totalReturns,totalBonus } = await c.req.json();
 
         // Validate input
-        if (!name || !amount || !dailyEarnings || !durationInDays || !totalReturns || !bonus || !description) {
+        if (!name || !amount || !dailyEarnings || !dailyBonus || !durationInDays || !totalReturns || !totalBonus || !description) {
             return c.json({ message: 'All fields are required' }, 400);
         }
 
@@ -27,9 +27,10 @@ export const addPackage = async (c: Context) => {
             amount,
             description,
             dailyEarnings,
+            dailyBonus,
             durationInDays,
             totalReturns,
-            bonus
+            totalBonus
         });
 
         return c.json({ message: 'Package created successfully', package: newPackage }, 200);
@@ -38,10 +39,10 @@ export const addPackage = async (c: Context) => {
     }
 };
 
-// **2. Edit Package Package**
+/// 2. Edit Package Package
 export const editPackage = async (c: Context) => {
     try {
-        let id = c.req.param("id"); // Get ID from request params
+        let id = c.req.param("id"); /// Get ID from request params
         const updateData = await c.req.json();
 
         
@@ -57,7 +58,7 @@ export const editPackage = async (c: Context) => {
     }
 };
 
-// **3. Delete Package Package**
+/// 3. Delete Package Package
 export const deletePackage = async (c: Context) => {
     try {
         const { id } = c.req.param(); // Get ID from request params
@@ -76,9 +77,9 @@ export const deletePackage = async (c: Context) => {
 
 export const getPackageById = async (c: Context) => {
     try {
-        const { id } = c.req.param(); // Get ID from request params
+        const { id } = c.req.param(); /// Get ID from request params
 
-        // ✅ Check if package exists
+        /// ✅ Check if package exists
         const packageData = await PackageModel.findById(id);
         if (!packageData) {
             return c.json({ message: "Package not found" }, 404);
@@ -91,7 +92,7 @@ export const getPackageById = async (c: Context) => {
     }
 };
 
-// **4. Get All Package Packages**
+/// 4. Get All Package Packages
 export const getPackages = async (c: Context) => {
     try {
         const packages = await PackageModel.find();
@@ -108,30 +109,30 @@ export const buyPackagePlan = async (c: Context) => {
         console.log("userData======>>>",userData)
         const {packageId } = await c.req.json();
 
-        // ✅ Validate request body
+        /// ✅ Validate request body
         if (!userData._id || !packageId) {
             return c.json({ message: "User ID and Package ID are required" }, 400);
         }
 
-        // ✅ Check if user exists
+        /// ✅ Check if user exists
         const user = await UserModel.findById(userData._id);
         if (!user) {
             return c.json({ message: "User not found" }, 404);
         }
 
-        // ✅ Check if  package exists
+        /// ✅ Check if  package exists
         const packageData = await PackageModel.findById(packageId);
         if (!packageData) {
             return c.json({ message: "Package not found" }, 404);
         }
 
-        // ✅ Call investment function (Prevents duplicate purchases)
+        /// ✅ Call investment function (Prevents duplicate purchases)
         const investmentResponse = await addInvestment(user._id as Types.ObjectId, packageId);
         if (!investmentResponse.success) {
             return c.json({ message: investmentResponse.message }, 400);
         }
  
-        // ✅ Distribute referral rewards
+        /// ✅ Distribute referral rewards
         await distributeReferralRewards(user._id as Types.ObjectId, packageData.amount);
 
         return c.json({

@@ -10,8 +10,9 @@ export interface IWallet extends Document {
     assets: Array<{
         assetId: mongoose.Types.ObjectId
         balance: string
-        lock: string
-    }>
+    }>,
+    totalBalanceInWeiUsd: string,
+    totalLockInWeiUsd: string,
     createdAt: Date
     updatedAt: Date
 }
@@ -58,15 +59,7 @@ const walletSchema: Schema = new Schema(
                         validator: (v: string) => /^\d+$/.test(v), 
                         message: (props: any) => `${props.value} is not a valid balance!`,
                     },
-                },
-                lock: {
-                    type: String,
-                    default: '0',
-                    validate: {
-                        validator: (v: string) => /^\d+$/.test(v), 
-                        message: (props: any) => `${props.value} is not a valid lock!`,
-                    },
-                },
+                }
             },
         ],
         totalBalanceInWeiUsd: {

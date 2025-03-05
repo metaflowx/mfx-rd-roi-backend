@@ -2,9 +2,9 @@ import { startSession, Types } from "mongoose";
 import walletModel, { IWallet } from "../models/walletModel";
 import { getAssetPriceInUSD } from "../services/assetPriceFromCoingecko";
 import assetsModel, { IAsset } from "../models/assetsModel";
-import { formatUnits } from "viem";
+import { formatUnits, parseEther } from "viem";
 import { Context } from "hono";
-import { getTotalUserBalance, getUserBalance, updateWalletBalance } from "../repositories/wallet";
+import {getTotalUserBalanceAtAsset, getUserBalanceAtAsset, updateWalletBalance } from "../repositories/wallet";
 
 
 export const userWallet = async (c: Context) => {
@@ -20,7 +20,7 @@ export const userWallet = async (c: Context) => {
 export const updateWalletBalanceByAdmin = async (c: Context) => {
     const { userId, assetId, balance } = await c.req.json()
     try {
-        const data = await updateWalletBalance(userId, assetId, balance)
+        const data = await updateWalletBalance(userId, assetId, parseEther(balance).toString())
         if (data) {
             return c.json({ message: "Balance updated successfully" }, 200)
         }
@@ -30,21 +30,21 @@ export const updateWalletBalanceByAdmin = async (c: Context) => {
     }
 }
 
-export const userBalance = async (c: Context) => {
+export const userBalanceAtAsset = async (c: Context) => {
     const { assetId } = c.req.query()
     const user = c.get("user")
     try {
-        const data = await getUserBalance(user._id, new Types.ObjectId(assetId))
+        const data = await getUserBalanceAtAsset(user._id, new Types.ObjectId(assetId))
         return c.json({ message: "Balance fetching...", data: data }, 200)
     } catch (error) {
         return c.json({ message: "Error fetching balance" }, 500)
     }
 }
 
-export const totalUserBalance = async (c: Context) => {
+export const totalUserBalanceAtAsset = async (c: Context) => {
     const user = c.get("user")
     try {
-        const data = await getTotalUserBalance(user._id)
+        const data = await getTotalUserBalanceAtAsset(user._id)
         return c.json({ message: "Balance fetching...", data: data }, 200)
     } catch (error) {
         return c.json({ message: "Error fetching balance" }, 500)

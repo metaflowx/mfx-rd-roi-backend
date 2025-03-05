@@ -4,9 +4,11 @@ export interface IPackage extends Document {
     name: string;
     amount: number;
     dailyEarnings: number;
+    dailyBonus: number;
     durationInDays: number;
     totalReturns: number;
-    bonus: number;
+    totalBonus: number;
+    description: string;
 }
 
 const packageSchema: Schema = new Schema(
@@ -24,6 +26,10 @@ const packageSchema: Schema = new Schema(
             type: Number, 
             required: true 
         },
+        dailyBonus: { 
+            type: Number, 
+            required: true 
+        },
         durationInDays: { 
             type: Number, 
             required: true 
@@ -32,7 +38,7 @@ const packageSchema: Schema = new Schema(
             type: Number, 
             required: true 
         },
-        bonus: { 
+        totalBonus: { 
             type: Number, 
             required: true 
         },

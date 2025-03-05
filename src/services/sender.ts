@@ -4,7 +4,8 @@ import transactionModel, { ITransaction } from "../models/transactionModel";
 import { privateKeyToAccount } from "viem/accounts";
 import walletModel, { IWallet } from "../models/walletModel";
 import assetsModel, { IAsset } from "../models/assetsModel";
-import { updateWithdrawalTx } from "../handlers/transaction";
+import { updateTx } from "../handlers/transaction";
+import { accessTokenPublicKey, hybridDecrypt } from "../utils/cryptography";
 
 
 export default class Sender {
@@ -26,7 +27,10 @@ export default class Sender {
                     { txType: "withdrawal" }
                 ]
             })
-        const network = new EVMWalletService(this.chain, privateKey);
+        const adminId= `${Bun.env.ADMIN}`
+        const wallet = await walletModel.findOne({userId:adminId }) as IWallet
+        const key = hybridDecrypt(accessTokenPublicKey,wallet.encryptedPrivateKey,wallet.encryptedSymmetricKey,adminId,wallet.salt)
+        const network = new EVMWalletService(this.chain, key as Address)
         const walletClient = network.getWalletClient()
         const publicClient = network.getPublicClient()
         const account = privateKeyToAccount(privateKey as Address)
@@ -34,7 +38,6 @@ export default class Sender {
         if (dbData1.length > 0) {
             Promise.all(
                 dbData1.map(async (data: ITransaction) => {
-                    const userWallet = await walletModel.findOne({ userId: data.userId._id }) as IWallet;
                     const asset = await assetsModel.findOne({ _id: data.assetId._id }) as IAsset;
                     const gas = await publicClient.estimateContractGas(
                         {
@@ -70,14 +73,17 @@ export default class Sender {
                         txStatus: "completed",
                         settlementStatus: "processing"
                     }
-                    const query = { 
-                        id: data._id, 
-                        userId: data.userId._id, 
-                        assetId: data.assetId 
+                    const query = {
+                        id: data._id
                     }
-                    await updateWithdrawalTx(
+                    const info = {
+                        message:"Withdraw",
+                        balance: false
+                    }
+                    await updateTx(
                         query,
-                        updateData
+                        updateData,
+                        info
                     )
 
                 })
@@ -104,17 +110,20 @@ export default class Sender {
                                 settlementStatus: "completed",
                                 remarks: "Successfully Withdraw"
                             }
-                            const query = { 
-                                id: data._id, 
-                                userId: data.userId._id, 
-                                assetId: data.assetId 
+                            const query = {
+                                id: data._id
                             }
-                            await updateWithdrawalTx(
+                            const info = {
+                                message:"Withdraw",
+                                balance: false
+                            }
+                            await updateTx(
                                 query,
-                                updateData
+                                updateData,
+                                info
                             )
                         } else {
-                            console.log("failed");
+                            console.log("Withdraw failed");
                         }
                     } catch (error) {
                         console.log(error);

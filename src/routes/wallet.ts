@@ -6,7 +6,7 @@ const walletRoutes = new Hono();
 
 walletRoutes.get('detail',protect,(c)=> wallet.userWallet(c))
 walletRoutes.put('/update',protect,(c)=> wallet.updateWalletBalanceByAdmin(c))
-walletRoutes.get('/balance',protect, (c) => wallet.userBalance(c)); 
-walletRoutes.get('/balances',protect, (c) => wallet.totalUserBalance(c)); 
+walletRoutes.get('asset//balance',protect, (c) => wallet.userBalanceAtAsset(c)); 
+walletRoutes.get('asset/balances',protect, (c) => wallet.totalUserBalanceAtAsset(c)); 
 
 export default walletRoutes;
