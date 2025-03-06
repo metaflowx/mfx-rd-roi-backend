@@ -9,20 +9,20 @@ import { calculateInvestmentStats } from '../repositories/investment';
 export const getActivePlanByUserId = async (c: Context) => {
     try {
         const { userId } = c.req.param(); // Get ID from request params
-        const status = c.req.query('status') || 'ACTIVE'
+        const { status } = c.req.query()
         // ✅ Fetch user investment and filter only ACTIVE packages
         const packageData = await InvestmentModel.findOne(
-            { userId }, // Filter by userId
+            {userId},
             {
                 buyPackagesDetails: {
                     $filter: {
                         input: "$buyPackagesDetails",
                         as: "package",
-                        cond: { $eq: ["$$package.status", status] } // Only ACTIVE plans
+                        cond: status ? { $eq: ["$$package.status", status] } : true
                     }
                 }
             }
-        ).populate('buyPackagesDetails.packageId')
+        ).populate('buyPackagesDetails.packageId');
 
         if (!packageData || packageData.buyPackagesDetails.length === 0) {
             return c.json({ message: "No Investments found" }, 404);
