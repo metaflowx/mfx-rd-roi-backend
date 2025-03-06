@@ -133,7 +133,7 @@ export const addReview = async (c: Context) => {
         if (!packageId) {
             return c.json({ message: 'PackageId is required.' }, 400);
         }
-        const packageData = await packageModel.findOne(packageId as Types.ObjectId);
+        const packageData = await packageModel.findOne(new mongoose.Types.ObjectId(packageId));
         if (!packageData) {
             return c.json({ message: 'Package data not found.' }, 404);
         }
