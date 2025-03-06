@@ -1,5 +1,6 @@
 import { Context } from 'hono';
 import TaskModel from '../models/taskModel';
+import packageModel from '../models/packageModel';
 import mongoose from 'mongoose';
 import { v2 as cloudinary } from "cloudinary";
 
@@ -120,7 +121,7 @@ export const getTaskById = async (c: Context) => {
 // Add Review to Task
 export const addReview = async (c: Context) => {
     try {
-        const { rating } = await c.req.json();
+        const { rating , packageId } = await c.req.json();
         const taskId = c.req.param('id');
         const user = c.get('user');
 
@@ -128,7 +129,13 @@ export const addReview = async (c: Context) => {
         if (rating < 1 || rating > 5) {
             return c.json({ message: "Rating must be between 1 and 5" }, 400);
         }
-
+        if (!packageId) {
+            return c.json({ message: 'PackageId is required.' }, 400);
+        }
+        const packageData = await packageModel.findOne(packageId);
+        if (!packageData) {
+            return c.json({ message: 'Package data not found.' }, 404);
+        }
 
         const task = await TaskModel.findById(taskId);
         if (!task) {
@@ -141,7 +148,7 @@ export const addReview = async (c: Context) => {
         
        // Check if the user has already added a review today
        const hasReviewedToday = task.reviews.some(
-           (review) => review.userId.toString() === user._id.toString() && review.reviewDate >= todayMidnight
+           (review) => review.userId.toString() === user._id.toString() && review.packageId.toString() === packageId &&  review.reviewDate >= todayMidnight
        );
 
        if (hasReviewedToday) {
@@ -149,8 +156,9 @@ export const addReview = async (c: Context) => {
        }
 
         // Add review
-        task.reviews.push({ userId: new mongoose.Types.ObjectId(user._id), rating, reviewDate: new Date() });
+        task.reviews.push({ userId: new mongoose.Types.ObjectId(user._id), packageId: new mongoose.Types.ObjectId(packageId), rating, reviewDate: new Date() });
         await task.save();
+
 
         return c.json({ message: 'Review added successfully', task });
     } catch (error) {

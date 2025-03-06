@@ -9,6 +9,7 @@ export interface ITask extends Document {
     status: "ACTIVE" | "INACTIVE";
     reviews: {
         userId: mongoose.Types.ObjectId;
+        packageId:mongoose.Types.ObjectId;
         rating: number;
         reviewDate: Date;
     }[];
@@ -25,6 +26,7 @@ const taskSchema: Schema = new Schema(
         reviews: [
             {
                 userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+                packageId: { type: mongoose.Schema.Types.ObjectId, ref: "Package" },
                 rating: { type: Number, min: 1, max: 5 },
                 reviewDate: { type: Date, default: Date.now, required: true },
             },
