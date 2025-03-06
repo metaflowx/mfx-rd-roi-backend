@@ -3,6 +3,6 @@ import { investment } from '../handlers';
 
 const investmentRoutes = new Hono();
 
-investmentRoutes.get('/getActivePlan/:userId', (c) => investment.getActivePlanByuserId(c));
+investmentRoutes.get('/getActivePlan/:userId', (c) => investment.getActivePlanByUserId(c));
 
 export default investmentRoutes;
