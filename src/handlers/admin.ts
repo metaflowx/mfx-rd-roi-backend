@@ -42,17 +42,16 @@ export const createAdmin = async (c: Context) => {
 
         const { encryptedSymmetricKey, encryptedData, salt } = hybridEncrypt(accessTokenPublicKey, privateKey, admin._id.toString());
 
-        let wallet = await WalletModel.create({
+        await WalletModel.create({
             userId: admin._id,
             address: address,
             encryptedSymmetricKey: encryptedSymmetricKey,
             encryptedPrivateKey: encryptedData,
             salt: salt,
         });
-        console.log("wallet====>>>", wallet)
 
         const newReferralCode = await generateUniqueReferralCode();
-        const referralContext = { userId: admin._id, referrerBy: '', referralCode: newReferralCode };
+        const referralContext = { userId: admin._id, referrerBy: null, referralCode: newReferralCode };
         await addReferral(referralContext);
 
 
