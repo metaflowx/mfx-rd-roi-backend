@@ -16,23 +16,23 @@ export const createTask = async (c: Context) => {
     try {
        
         // Extract fields and file path from context
-        const fields = c.get("fields") as any;
-        const filePath = c.get("filePath") as string;
-        if (!fields || !filePath) {
-            return c.json({ error: "All fields and image 222 file are required." }, 400);
+        const { title, type, description, points, image } = await c.req.json();
+        
+        /// Validate input
+        if (!title || !type || !description || !points || !image ) {
+            return c.json({ message: 'All fields are required' }, 400);
         }
-
-        const { title, type, description, points } = fields;
-
-        console.log("Received Fields:", title, type, description, points);
-        console.log("Stored Image Path:", filePath);
+        const existingTask = await TaskModel.findOne({title:title});
+        if (existingTask) {
+            return c.json({ message: "Task already exist." }, 404);
+        }
 
         // Save task in the database
         const newTask = await TaskModel.create({
             title,
             type,
             description,
-            image: filePath,
+            image: image,
             points,
         });
 
