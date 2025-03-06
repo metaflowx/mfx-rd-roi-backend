@@ -1,5 +1,7 @@
 import { Context } from "hono";
 import ReferralEarnings from "../models/referralModel";
+import userModel from "../models/userModel";
+
 import WalletModel from "../models/walletModel";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
@@ -89,6 +91,52 @@ export const getReferralStats = async (c: Context) => {
     return c.json({ message: "Server error", error }, 500);
   }
 };
+
+export const getReferralUsersByLevel = async (c: Context) => {
+  try {
+    const { level } = c.req.query(); // Get level from query params
+    const userId = c.get("user").id; // Get logged-in user's ID from the token
+
+    const validLevels = ["level1", "level2", "level3"];
+    if (!validLevels.includes(level)) {
+      return c.json({ message: "Invalid level parameter" }, 400);
+    }
+
+    // Find referral stats for the user
+    const referralStats = await ReferralEarnings.findOne({ userId }).populate({
+      path: `referralStats.levels.${level}.referrals`,
+      select: "_id",
+    });
+
+    if (!referralStats) {
+      return c.json({ message: "No referral stats found" }, 404);
+    }
+
+    const levelsMap = referralStats.referralStats.levels || new Map();
+    const levels = Object.fromEntries(levelsMap);
+    const selectedLevelData = levels[level];
+    console.log('selectedLevelData :>> ', selectedLevelData);
+    if (!selectedLevelData || !selectedLevelData.referrals.length) {
+      return c.json({ message: `No referrals found for ${level}` }, 404);
+    }
+    const referralUserIds = selectedLevelData.referrals.map((ref) => ref._id);
+    console.log('referralUserIds :>> ', referralUserIds);
+
+
+
+    return c.json(
+      {
+        message: `Referrals fetched for ${level}`,
+        data: {},
+      },
+      200
+    );
+  } catch (error) {
+    console.error("Error fetching referral users:", error);
+    return c.json({ message: "Server error", error: error.message }, 500);
+  }
+};
+
 
 /**
  * Get total referral earnings for the logged-in user
