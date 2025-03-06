@@ -13,5 +13,6 @@ taskRoutes.get("/", (c) => task.getTasks(c));
 taskRoutes.get("/:id", (c) => task.getTaskById(c));
 
 taskRoutes.post("/review/:id", protect, (c) => task.addReview(c));
+taskRoutes.get("/progress/:packageId",protect,(c) => task.getTaskProgress(c));
 
 export default taskRoutes;

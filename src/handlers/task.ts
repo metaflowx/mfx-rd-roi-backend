@@ -1,8 +1,9 @@
 import { Context } from 'hono';
 import TaskModel from '../models/taskModel';
 import packageModel from '../models/packageModel';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { v2 as cloudinary } from "cloudinary";
+import taskModel from '../models/taskModel';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -125,14 +126,14 @@ export const addReview = async (c: Context) => {
         const taskId = c.req.param('id');
         const user = c.get('user');
 
-        // Validate rating
+        /// Validate rating
         if (rating < 1 || rating > 5) {
             return c.json({ message: "Rating must be between 1 and 5" }, 400);
         }
         if (!packageId) {
             return c.json({ message: 'PackageId is required.' }, 400);
         }
-        const packageData = await packageModel.findOne(packageId);
+        const packageData = await packageModel.findOne(packageId as Types.ObjectId);
         if (!packageData) {
             return c.json({ message: 'Package data not found.' }, 404);
         }
@@ -142,11 +143,11 @@ export const addReview = async (c: Context) => {
             return c.json({ message: 'Task not found' }, 404);
         }
 
-       // Get today's date at 12 AM
+       /// Get today's date at 12 AM
        const todayMidnight = new Date();
        todayMidnight.setHours(0, 0, 0, 0);
         
-       // Check if the user has already added a review today
+       /// Check if the user has already added a review today
        const hasReviewedToday = task.reviews.some(
            (review) => review.userId.toString() === user._id.toString() && review.packageId.toString() === packageId &&  review.reviewDate >= todayMidnight
        );
@@ -155,7 +156,7 @@ export const addReview = async (c: Context) => {
            return c.json({ message: "You can only add one review per day" }, 403);
        }
 
-        // Add review
+        /// Add review
         task.reviews.push({ userId: new mongoose.Types.ObjectId(user._id), packageId: new mongoose.Types.ObjectId(packageId), rating, reviewDate: new Date() });
         await task.save();
 
@@ -197,3 +198,50 @@ export const uploadImage = async (c: Context) => {
     return c.json({ message: "Server error", error }, 500);
     }
 };
+
+
+const getProgress = async (userId: string, packageId: string) => {
+    try {
+        // User ka specific package find karo
+        const userPackage = await packageModel.findById(packageId);
+        if (!userPackage) {
+            return { success: false, message: "User package not found" };
+        }
+
+        // Aaj ka date calculate karo
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+
+        // Count how many tasks are completed today for this package
+        const completedTasks = await taskModel.countDocuments({
+            "reviews.userId": userId,
+            "reviews.packageId": packageId, // Filter by package
+            "reviews.reviewDate": { $gte: today, $lt: tomorrow },
+        });
+
+        return {
+            success: true,
+            message: `Tasks completed: ${completedTasks}/${userPackage.requiredTask}`,
+            completed: completedTasks,
+            requiredTask: userPackage.requiredTask
+        };
+    } catch (error) {
+        console.error("Error getting task progress:", error);
+        return { success: false, message: "Internal server error" };
+    }
+}
+
+export const getTaskProgress = async (c: Context) => {
+    try {
+        const user = c.get("user"); // Authenticated user
+        const packageId = c.req.param("packageId"); // Package ID from URL
+        const data = await  getProgress(user._id,packageId)
+        return c.json({...data});
+    } catch (error) {
+        console.error("Error getting task progress:", error);
+        return c.json({ success: false, message: "Internal server error" }, 500);
+    }
+};
+
