@@ -150,8 +150,8 @@ export const getReferralUsersByLevel = async (c: Context) => {
         }        
         return {
           user,
-          count:referrals?.referralStats.levels.level1.count,
-          packageName:packageDetails?.name
+          count:referrals?.referralStats.levels.level1.count || 0,
+          packageName:packageDetails?.name || null
         };
       })
     );
