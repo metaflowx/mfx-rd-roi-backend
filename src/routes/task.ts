@@ -4,7 +4,7 @@ import { protect, isAdmin ,uploadMiddleware } from "../middleware";
 
 const taskRoutes = new Hono();
 
-taskRoutes.post("/create", protect, isAdmin, uploadMiddleware, (c) => task.createTask(c));
+taskRoutes.post("/create", protect, isAdmin,  (c) => task.createTask(c));
 taskRoutes.put("/edit/:id", protect, isAdmin, (c) => task.editTask(c));
 taskRoutes.delete("/delete/:id", protect, isAdmin, (c) => task.deleteTask(c));
 taskRoutes.post("/uploadImage", protect, isAdmin, (c) => task.uploadImage(c));
