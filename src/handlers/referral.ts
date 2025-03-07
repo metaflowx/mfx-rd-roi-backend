@@ -3,6 +3,7 @@ import ReferralEarnings from "../models/referralModel";
 import userModel from "../models/userModel";
 import investmentModel from "../models/investmentModel";
 import packageModel from "../models/packageModel";
+import { calculateInvestmentStats } from '../repositories/investment';
 
 import WalletModel from "../models/walletModel";
 import mongoose from "mongoose";
@@ -294,9 +295,39 @@ export const ReferralListHistory = async (c: Context) => {
         404
       );
     }
-
+  
+    const usersWithInvestments = await Promise.all(
+      filteredData.map(async (user:any) => {
+            const packageData = await investmentModel.findOne(
+              { userId: user.userId._id }, 
+              {
+                    buyPackagesDetails: {
+                        $filter: {
+                            input: "$buyPackagesDetails",
+                            as: "package",
+                            cond: true
+                        }
+                    }
+                }
+            ).populate('buyPackagesDetails.packageId');
+            if (!packageData || packageData.buyPackagesDetails.length === 0) {
+                return {
+                    ...user,
+                    stats: null 
+                };
+            }        
+            const stats = calculateInvestmentStats(packageData);
+    
+            return {
+                ...user,
+                stats 
+            };
+        })
+      );
+      console.log({usersWithInvestments});
+      
     return c.json(
-      { message: "Referral history fetch successfully", history: filteredData },
+      { message: "Referral history fetch successfully", history: usersWithInvestments },
       200
     );
   } catch (error) {
