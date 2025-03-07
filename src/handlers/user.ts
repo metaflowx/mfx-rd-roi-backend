@@ -6,6 +6,8 @@ import { generateJwtToken, comparePassword  , generateUniqueReferralCode} from '
 import { addReferral } from '../repositories/referral'; // Import the function
 import { generateRandomWallet } from '../services';
 import { accessTokenPublicKey, hybridEncrypt } from '../utils/cryptography';
+import { calculateInvestmentStats } from '../repositories/investment';
+import InvestmentModel from '../models/investmentModel';
 
 
 
@@ -147,8 +149,56 @@ export const loginUser = async (c: Context) => {
 // Get All Users with Wallets and Decrypt Private Key
 export const getAllUsers = async (c: Context) => {
     try {
-        const usersWithWallets = await UserModel.find();
-        return c.json(usersWithWallets);
+        const { status, page, limit, sortBy = 'createdAt', sortOrder = 'desc' } = c.req.query();
+        const page_ = parseInt(page) || 1;
+        const limit_ = parseInt(limit) || 10;
+        const skip = (page_ - 1) * limit_;
+        const filter: any = { role: "USER" };
+
+        const usersWithWallets = await UserModel.aggregate([
+            { $match: filter },
+            { $sort: { [sortBy]: sortOrder === "asc" ? 1 : -1 } },
+            { $skip: skip },
+            { $limit: limit_ },
+        ]);
+        const usersWithInvestments = await Promise.all(
+            usersWithWallets.map(async (user) => {
+                const packageData = await InvestmentModel.findOne(
+                    { userId: user._id },
+                    {
+                        buyPackagesDetails: {
+                            $filter: {
+                                input: "$buyPackagesDetails",
+                                as: "package",
+                                cond: status ? { $eq: ["$$package.status", status] } : true
+                            }
+                        }
+                    }
+                ).populate('buyPackagesDetails.packageId');
+                if (!packageData || packageData.buyPackagesDetails.length === 0) {
+                    return {
+                        ...user,
+                        stats: null 
+                    };
+                }        
+                const stats = calculateInvestmentStats(packageData);
+        
+                return {
+                    ...user,
+                    stats 
+                };
+            })
+        );
+        const total = await UserModel.countDocuments(filter);
+        
+        return c.json({
+            message: "users fetching done",
+            page: page_,
+            limit: limit_,
+            total,
+            totalPages: Math.ceil(total / limit_),
+            data: usersWithInvestments,
+        });
     } catch (error) {
         console.error(error);
         return c.json({ message: 'Server error', error }, 500);
