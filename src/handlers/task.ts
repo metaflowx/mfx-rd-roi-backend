@@ -4,6 +4,9 @@ import packageModel from '../models/packageModel';
 import mongoose, { Types } from 'mongoose';
 import { v2 as cloudinary } from "cloudinary";
 import taskModel from '../models/taskModel';
+import walletModel from '../models/walletModel';
+import { parseEther } from 'viem';
+import investmentModel from '../models/investmentModel';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -133,11 +136,28 @@ export const addReview = async (c: Context) => {
         if (!packageId) {
             return c.json({ message: 'PackageId is required.' }, 400);
         }
-        const packageData = await packageModel.findOne(new mongoose.Types.ObjectId(packageId));
-        if (!packageData) {
+        const packageData = await investmentModel.findOne(
+            { userId: new mongoose.Types.ObjectId(user._id) },
+            {
+                buyPackagesDetails: {
+                    $filter: {
+                        input: "$buyPackagesDetails",
+                        as: "package",
+                        cond: {
+                            $and: [
+                                { $eq: ["$$package.packageId", new mongoose.Types.ObjectId(packageId)] }, // Match packageId
+                                { $eq: ["$$package.status", 'ACTIVE'] } 
+                            ]
+                        }
+                    }
+                }
+            }
+        ).populate("buyPackagesDetails.packageId") as any
+
+        if( packageData && packageData.buyPackagesDetails.length===0) {
             return c.json({ message: 'Package data not found.' }, 404);
         }
-
+    
         const task = await TaskModel.findById(taskId);
         if (!task) {
             return c.json({ message: 'Task not found' }, 404);
@@ -161,7 +181,28 @@ export const addReview = async (c: Context) => {
         await task.save();
 
 
-        return c.json({ message: 'Review added successfully', task });
+        const {completed:completedTasks} = await  getProgress(user._id,packageId) as any
+        if ( completedTasks === packageData.buyPackagesDetails[0].packageId.requiredTask) {
+            const userWallet = await walletModel.findOne({ userId:user._id });
+            if (!userWallet) {
+                return c.json({ success: false, message: "Wallet not found" },400);
+            }
+            
+            const today = new Date();
+            const daysPassed = Math.ceil((today.getTime() - packageData.buyPackagesDetails[0].investmentDate.getTime()) / (1000 * 60 * 60 * 24));
+            const daysToReceiveBonus= Number(packageData.buyPackagesDetails[0].packageId.totalBonus)/Number(packageData.buyPackagesDetails[0].packageId.dailyBonus)
+            /// Calculate the number of days the user has been receiving bonus
+            if (daysPassed <= daysToReceiveBonus) {
+                userWallet.totalBalanceInWeiUsd = (parseFloat(userWallet.totalBalanceInWeiUsd) + parseFloat(parseEther((parseFloat(packageData.buyPackagesDetails[0].packageId.dailyEarnings) + parseFloat(packageData.buyPackagesDetails[0].packageId.dailyBonus)).toString()).toString())).toString();
+            } else {
+                userWallet.totalBalanceInWeiUsd = (parseFloat(userWallet.totalBalanceInWeiUsd) + parseFloat(parseEther(packageData.buyPackagesDetails[0].packageId.dailyEarnings.toString()).toString())).toString()
+            }
+            await userWallet.save();
+
+            return c.json({ success: true, message: "Task completed & Wallet updated!" },200)
+        }
+
+        return c.json({ message: 'Review added successfully',task},200);
     } catch (error) {
         console.error('Error adding review:', error);
         return c.json({ message: 'Server error', error }, 500);
