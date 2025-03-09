@@ -49,10 +49,10 @@ export const updateWalletBalance = async (
       wallet.totalBalanceInWeiUsd = (parseFloat(wallet.totalBalanceInWeiUsd) + balanceInUSD).toString()
       wallet.totalDepositInWeiUsd = (parseFloat(wallet.totalDepositInWeiUsd) + balanceInUSD).toString()
     } else {
-      wallet.totalBalanceInWeiUsd = (parseFloat(wallet.totalBalanceInWeiUsd) + parseFloat(balanceChangeInWei)).toString()
+      wallet.totalFlexibleBalanceInWeiUsd = (parseFloat(wallet.totalFlexibleBalanceInWeiUsd) + parseFloat(balanceChangeInWei)).toString()
       wallet.totalWithdrawInWeiUsd = (parseFloat(wallet.totalWithdrawInWeiUsd) + parseFloat(balanceChangeInWei)).toString()
     }
-    await wallet.save(); // Save the updated wallet within the transaction
+    await wallet.save(); /// Save the updated wallet within the transaction
     console.log('Wallet balance updated successfully');
     return true;
   } catch (error) {

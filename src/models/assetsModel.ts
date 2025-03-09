@@ -24,7 +24,7 @@ const AssetSchema: Schema = new Schema({
     assetType: { type: String, required: true },
     coinGeckoId: { type: String, required: true },
     name: { type: String, required: true },
-    symbol: { type: String, required: true, unique: true },
+    symbol: { type: String, required: true },
     decimals: { type: Number, default: 18 },
     depositEnabled: { type: Boolean, default: true },
     withdrawalEnabled: { type: Boolean, default: false },

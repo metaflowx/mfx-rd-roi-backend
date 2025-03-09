@@ -14,7 +14,9 @@ export interface IWallet extends Document {
     totalBalanceInWeiUsd: string,
     totalWithdrawInWeiUsd: string,
     totalDepositInWeiUsd: string,
+    totalFlexibleBalanceInWeiUsd:string,
     totalLockInWeiUsd: string,
+    lastWithdrawalAt: Date,
     createdAt: Date
     updatedAt: Date
 }
@@ -64,7 +66,7 @@ const walletSchema: Schema = new Schema(
                 }
             },
         ],
-        totalBalanceInWeiUsd: {
+        totalBalanceInWeiUsd: { /// only use to buy package after deposit and deduct
             type: String,
             default: "0",
         },
@@ -76,9 +78,16 @@ const walletSchema: Schema = new Schema(
             type: String,
             default: "0",
         },
+        totalFlexibleBalanceInWeiUsd: { /// earning balance(deduct when user withdraw)
+            type: String,
+            default: "0",
+        },
         totalLockInWeiUsd: {
             type: String,
             default: "0",
+        },
+        lastWithdrawalAt: {
+            type: Date
         }
     },
     { timestamps: true }

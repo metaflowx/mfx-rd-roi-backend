@@ -1,6 +1,8 @@
 import ReferralEarnings from '../models/referralModel';
 import mongoose, { Schema, Document, Types } from 'mongoose';
 import dotenv from "dotenv";
+import walletModel from '../models/walletModel';
+import { parseEther } from 'viem';
 
 dotenv.config();
 
@@ -95,8 +97,14 @@ export const distributeReferralRewards = async (userId: Types.ObjectId, packageA
             },
             { new: true }
         );
-
-        // Move up the referral chain
+        const userWallet = await walletModel.findOne({ userId: referrerId });
+        if(!userWallet){
+            console.log(`Wallet not found for referrer ${referrerId}, skipping level ${level + 1}`);
+             break;
+          }
+        userWallet.totalFlexibleBalanceInWeiUsd = (parseFloat(userWallet.totalFlexibleBalanceInWeiUsd ) + parseFloat(parseEther(commission.toString()).toString())).toString();
+        await userWallet.save();
+        /// Move up the referral chain
         const referrerData = await ReferralEarnings.findOne({ userId: referrerId });
         if(!referrerData || referrerData.referrerBy == null ) break;
         referrerId = referrerData.referrerBy;

@@ -7,13 +7,13 @@ export const addInvestment = async (userId: Types.ObjectId, packageId: Types.Obj
         let investment = await InvestmentModel.findOne({ userId });
 
         if (investment) {
-            // ✅ Check if the same package is already purchased
+            /// ✅ Check if the same package is already purchased
             const packageExists = investment.buyPackagesDetails.some(detail => detail.packageId.toString() === packageId.toString() && detail.status === "ACTIVE");
             if (packageExists) {
                 return { success: false, message: "You have already purchased this package." };
             }
 
-            // ✅ If package not purchased, push new package details
+            /// ✅ If package not purchased, push new package details
             investment.buyPackagesDetails.push({
                 packageId,
                 investmentDate: new Date(),
@@ -21,7 +21,7 @@ export const addInvestment = async (userId: Types.ObjectId, packageId: Types.Obj
             });
 
         } else {
-            // ✅ If no investment record exists, create a new one
+            /// ✅ If no investment record exists, create a new one
             investment = new InvestmentModel({
                 userId,
                 buyPackagesDetails: [{
@@ -40,6 +40,33 @@ export const addInvestment = async (userId: Types.ObjectId, packageId: Types.Obj
         return { success: false, message: "Investment creation failed", error };
     }
 }
+
+export const completeInvestment = async (userId: Types.ObjectId, packageId: Types.ObjectId) => {
+    try {
+        /// Find the investment
+        const investment = await InvestmentModel.findOne({ userId });
+        if (!investment) {
+            throw new Error("Investment not found.");
+        }
+  
+        /// Find the specific package investment
+        const packageInvestment = investment.buyPackagesDetails.find(
+            (pkg) => pkg.packageId.toString() === packageId.toString()  && pkg.status === "ACTIVE"
+        );
+        if (!packageInvestment) {
+            throw new Error("Package investment not found.");
+        }
+  
+        /// Mark the investment as COMPLETED
+        packageInvestment.status = 'COMPLETED';
+        await investment.save();
+  
+        console.log(`Investment for package ${packageId} marked as COMPLETED for user ${userId}`);
+    } catch (error) {
+        console.error("Error in completing investment:", error);
+        throw error;
+    }
+  };
 
 
 interface InvestmentStats {
@@ -79,7 +106,7 @@ export const calculateInvestmentStats = (packageData: any): InvestmentStats => {
 
         const investmentDate = new Date(investment.investmentDate);
         const timeDifference = now.getTime() - investmentDate.getTime();
-        const daysSinceInvestment = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+        const daysSinceInvestment = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
 
         /// Calculate today's earnings (if investment is still active)
         if (daysSinceInvestment < packageDetails.durationInDays) {
@@ -93,10 +120,12 @@ export const calculateInvestmentStats = (packageData: any): InvestmentStats => {
 
         /// Calculate total earnings (capped at durationInDays)
         const totalEarningsDays = Math.min(daysSinceInvestment, packageDetails.durationInDays);
+        console.log({totalEarningsDays});
+        
         totalSumOfInvestmentEarnings += totalEarningsDays * packageDetails.dailyEarnings;
 
         /// Calculate total bonus (capped at durationInDays)
-        totalSumOfInvestmentBonus += totalEarningsDays * (packageDetails.totalBonus || 0); // Use bonus field if available
+        totalSumOfInvestmentBonus += totalEarningsDays * (packageDetails.dailyBonus || 0); // Use bonus field if available
 
         /// Calculate total bonus (capped at durationInDays)
         totalSumOfInvestment += packageDetails.amount ; 

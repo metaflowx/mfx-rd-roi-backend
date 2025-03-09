@@ -4,10 +4,10 @@ import { getAssetPriceInUSD } from "../services/assetPriceFromCoingecko";
 
 export const addAsset = async (c: Context) => {
     try {
-        const { chainId, assetAddress, assetType,coinGeckoId, name, symbol, depositEnabled, withdrawalEnabled,withdrawalFee } = await c.req.json();
+        const { chainId, assetAddress, assetType,coinGeckoId, name, symbol, depositEnabled, withdrawalEnabled,withdrawalFee,minWithdrawalAmount,maxWithdrawalAmount } = await c.req.json();
 
         /// Validate 
-        if (!chainId || !assetAddress || !assetType || !name || !symbol || !coinGeckoId) {
+        if (!chainId || !assetAddress || !assetType || !name || !symbol || !coinGeckoId || !minWithdrawalAmount || !maxWithdrawalAmount) {
             return c.json({ message: 'All fields are required' }, 400);
         }
 
@@ -27,10 +27,12 @@ export const addAsset = async (c: Context) => {
             symbol,
             depositEnabled,
             withdrawalEnabled,
-            withdrawalFee
+            withdrawalFee,
+            minWithdrawalAmount,
+            maxWithdrawalAmount
 
         });
-        return c.json({ message: 'Asset created successfully', data: newAsset }, 201);
+        return c.json({ message: 'Asset created successfully', data: newAsset }, 200);
     } catch (error) {
         return c.json({ message: 'Server error', error }, 500);
     }
@@ -47,7 +49,7 @@ export const editAsset = async (c: Context) => {
             return c.json({ message: 'Asset not found' }, 404);
         }
 
-        return c.json({ message: 'Asset updated successfully', data: updatedAsset });
+        return c.json({ message: 'Asset updated successfully', data: updatedAsset },200);
     } catch (error) {
         return c.json({ message: 'Server error', error }, 500);
     }

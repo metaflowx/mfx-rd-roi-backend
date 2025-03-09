@@ -187,15 +187,14 @@ export const addReview = async (c: Context) => {
             if (!userWallet) {
                 return c.json({ success: false, message: "Wallet not found" },400);
             }
-            
             const today = new Date();
             const daysPassed = Math.ceil((today.getTime() - packageData.buyPackagesDetails[0].investmentDate.getTime()) / (1000 * 60 * 60 * 24));
             const daysToReceiveBonus= Number(packageData.buyPackagesDetails[0].packageId.totalBonus)/Number(packageData.buyPackagesDetails[0].packageId.dailyBonus)
             /// Calculate the number of days the user has been receiving bonus
             if (daysPassed <= daysToReceiveBonus) {
-                userWallet.totalBalanceInWeiUsd = (parseFloat(userWallet.totalBalanceInWeiUsd) + parseFloat(parseEther((parseFloat(packageData.buyPackagesDetails[0].packageId.dailyEarnings) + parseFloat(packageData.buyPackagesDetails[0].packageId.dailyBonus)).toString()).toString())).toString();
+                userWallet.totalFlexibleBalanceInWeiUsd = (parseFloat(userWallet.totalFlexibleBalanceInWeiUsd) + parseFloat(parseEther((parseFloat(packageData.buyPackagesDetails[0].packageId.dailyEarnings) + parseFloat(packageData.buyPackagesDetails[0].packageId.dailyBonus)).toString()).toString())).toString();
             } else {
-                userWallet.totalBalanceInWeiUsd = (parseFloat(userWallet.totalBalanceInWeiUsd) + parseFloat(parseEther(packageData.buyPackagesDetails[0].packageId.dailyEarnings.toString()).toString())).toString()
+                userWallet.totalFlexibleBalanceInWeiUsd = (parseFloat(userWallet.totalFlexibleBalanceInWeiUsd) + parseFloat(parseEther(packageData.buyPackagesDetails[0].packageId.dailyEarnings.toString()).toString())).toString()
             }
             await userWallet.save();
 

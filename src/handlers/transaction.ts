@@ -70,14 +70,23 @@ export const txConfirmRequestForDeposit = async (c: Context) => {
 export const txRequestForWithdrawal = async (c: Context) => {
     const { assetId, withdrawalAddress, withdrawalAmount, password } = await c.req.json();
     const user = c.get('user');
+    const now = new Date()
     try {
-
         const wallet = await WalletModel.findOne({userId: user._id})
         if (!wallet) {
             return c.json({ message: "User wallet not found." }, 404);
         }
+        if (wallet.lastWithdrawalAt) {
+            const lastWithdrawalTime = new Date(wallet.lastWithdrawalAt);
+            const timeSinceLastWithdrawal = now.getTime() - lastWithdrawalTime.getTime();
+            const twentyFourHoursInMs = 24 * 60 * 60 * 1000; /// 24 hours
+        
+            if (timeSinceLastWithdrawal < twentyFourHoursInMs) {
+                return c.json({ message: "Please wait 24 hours before your next withdrawal." }, 400);
+            }
+        }
         if (withdrawalAmount == 0) return c.json({ message: "Withdrawal amount should be greater than zero." }, 400);
-        if (withdrawalAmount > parseFloat(formatUnits(BigInt(wallet.totalBalanceInWeiUsd), 18))) {
+        if (withdrawalAmount > parseFloat(formatUnits(BigInt(wallet.totalFlexibleBalanceInWeiUsd), 18))) {
             return c.json({ message: "Insufficient balance." }, 400);
         }
         
@@ -144,6 +153,7 @@ export const getTransactionList = async (c: Context) => {
 
         const txs = await TransactionModel
             .find(filter)
+            .populate('userId', '-password')
             .populate('assetId')
             .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
             .skip(skip)
