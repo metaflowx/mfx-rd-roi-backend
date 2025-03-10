@@ -4,7 +4,7 @@ import userModel from "../models/userModel";
 import investmentModel from "../models/investmentModel";
 import packageModel from "../models/packageModel";
 import { calculateInvestmentStats } from '../repositories/investment';
-
+import freezeModel from "../models/freezeWalletModel";
 import WalletModel from "../models/walletModel";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
@@ -328,6 +328,41 @@ export const ReferralListHistory = async (c: Context) => {
       
     return c.json(
       { message: "Referral history fetch successfully", history: usersWithInvestments },
+      200
+    );
+  } catch (error) {
+    return c.json({ message: "Server error", error }, 500);
+  }
+};
+
+/// get freeze amount Details
+export const getFreezeAmount = async (c: Context) => {
+  try {
+    const { status } = c.req.query();
+
+    const userId = c.get("user").id;
+    let filter: any = { userId };
+    if (status) {
+      filter["lockerDetails.status"] = status;
+    }
+
+
+    const getData = await freezeModel.findOne(filter)
+    .populate({
+      path: 'lockerDetails.packageId',
+      model: 'Package' 
+    }).sort({"createdAt": -1})
+    
+
+    if (!getData) {
+      return c.json(
+        { success: false, message: "No data found" },
+        404
+      );
+    }
+
+    return c.json(
+      { message: "Data fetch successfully", data: getData },
       200
     );
   } catch (error) {

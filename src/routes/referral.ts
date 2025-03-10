@@ -12,5 +12,6 @@ referralRoutes.get('/earnings', protect, (c) => referral.getReferralEarnings(c))
 referralRoutes.get('/history', protect, (c) => referral.getReferralHistory(c)); // Get referral earnings history
 referralRoutes.put('/disableReferral/:id', protect, isAdmin, (c) => referral.disableReferral(c)); 
 referralRoutes.get('/ReferralListHistory', protect, isAdmin, (c) => referral.ReferralListHistory(c)); 
+referralRoutes.get('/getFreezeAmount', protect, (c) => referral.getFreezeAmount(c));
 
 export default referralRoutes;
