@@ -147,16 +147,34 @@ export const distributeReferralRewards = async (userId: Types.ObjectId, packageA
                 userWallet.totalFlexibleBalanceInWeiUsd = (parseFloat(userWallet.totalFlexibleBalanceInWeiUsd) + parseFloat(parseEther(commission.toString()).toString())).toString();
                 await userWallet.save();
             } else {
-                const freeze = new freezeWalletModel({
-                    userId: referrerId,
-                    lockerDetails: [{
-                        packageId: packages[0].packageId._id,
-                        amount: commission,
-                        investmentDate: new Date(),
-                        status: "PENDING"
-                    }]
-                });
-                await freeze.save();
+                let data= await freezeWalletModel.findOne({userId: referrerId})
+                if (data) {
+                    await freezeWalletModel.findByIdAndUpdate(
+                        { _id: data._id },
+                        {
+                            $push: {
+                                lockerDetails: {
+                                    packageId: packages[0].packageId._id,
+                                    amount: commission,
+                                    investmentDate: new Date(),
+                                    status: "PENDING"
+                                }
+                            }
+                        },
+                        { new: true }
+                    );
+                } else {
+                    const freeze = new freezeWalletModel({
+                        userId: referrerId,
+                        lockerDetails: [{
+                            packageId: packages[0].packageId._id,
+                            amount: commission,
+                            investmentDate: new Date(),
+                            status: "PENDING"
+                        }]
+                    });
+                    await freeze.save();
+                }
 
             }
 
