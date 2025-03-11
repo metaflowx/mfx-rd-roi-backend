@@ -80,8 +80,11 @@ export const distributeReferralRewards = async (userId: Types.ObjectId, packageA
                 },
             }
         ).populate("buyPackagesDetails.packageId");
-        const packages = packageData?.buyPackagesDetails.filter(
-            (pkg) => pkg.status === "ACTIVE" && pkg.packageId.amount === packageAmount
+        if(!packageData){
+            return
+        }
+        const packages = packageData.buyPackagesDetails.filter(
+            (pkg:any) => pkg.status === "ACTIVE" && pkg.packageId.amount === packageAmount
         );
         if (!userReferral || !userReferral.referrerBy) {
             console.log("No referrer found for this user.");
