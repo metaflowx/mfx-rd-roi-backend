@@ -361,8 +361,16 @@ export const getFreezeAmount = async (c: Context) => {
       );
     }
 
+    const modifiedData = {
+      ...getData.toObject(), 
+      lockerDetails: getData.lockerDetails.map((locker) => ({
+        ...locker.toObject(),
+        expiredAt: new Date(new Date(locker.createdAt).getTime() + 48 * 60 * 60 * 1000), // Add 48 hours
+      })),
+    };
+
     return c.json(
-      { message: "Data fetch successfully", data: getData },
+      { message: "Data fetch successfully", data: modifiedData },
       200
     );
   } catch (error) {
