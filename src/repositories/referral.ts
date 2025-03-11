@@ -83,7 +83,7 @@ export const distributeReferralRewards = async (userId: Types.ObjectId, packageA
         if(!packageData){
             return
         }
-        const packages = packageData.buyPackagesDetails.filter(
+        const packages:any = packageData.buyPackagesDetails.filter(
             (pkg:any) => pkg.status === "ACTIVE" && pkg.packageId.amount === packageAmount
         );
         if (!userReferral || !userReferral.referrerBy) {
@@ -137,12 +137,12 @@ export const distributeReferralRewards = async (userId: Types.ObjectId, packageA
 
             let isMatchingPackage = false;
             if (packageData != null) {
-                const matchingIds = packageData?.buyPackagesDetails
+                const matchingAmounts = packageData?.buyPackagesDetails
                     .filter((pkg) => pkg.status === "ACTIVE")
-                    .map((pkg) => pkg.packageId._id.toString());
+                    .map((pkg:any ) => pkg.packageId.amount);
 
-                isMatchingPackage = matchingIds?.includes(
-                    packages[0].packageId._id.toString()
+                isMatchingPackage = matchingAmounts?.some(
+                    (amount:any) => amount >= packages[0].packageId.amount
                 );
             }
 
