@@ -16,10 +16,38 @@ export const dashboard = async (c: Context) => {
             { $unwind: "$buyPackagesDetails" }, // Unwind the array to count each package separately
             { $count: "total" } // Count the total number of bought investment plans
         ]);
+        let totalInvestment=await InvestmentModel.aggregate([
+            {
+                $unwind: "$buyPackagesDetails"
+            },
+            {
+                $lookup: {
+                    from: "packages", 
+                    localField: "buyPackagesDetails.packageId",
+                    foreignField: "_id",
+                    as: "packageInfo"
+                }
+            },
+            {
+                $unwind: "$packageInfo"
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalInvestment: { $sum: "$packageInfo.amount" }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    totalInvestment: 1
+                }
+            }
+        ]);
+
         
         const totalSubscriptionCount = totalBuyInvestmentPlans.length > 0 ? totalBuyInvestmentPlans[0].total : 0;
-
-        return c.json({ message: "dashboard data fetch successfully", userCount: userCount ,blockUser: blockedUserCount, activePackageCount: activePackageCount, activeTaskCount:activeTaskCount, platefromTotalEarnig: 0, totalSubscriptionCount:totalSubscriptionCount }, 200);
+        return c.json({ message: "dashboard data fetch successfully", userCount: userCount, totalInvestment: totalInvestment[0].totalInvestment , blockUser: blockedUserCount, activePackageCount: activePackageCount, activeTaskCount:activeTaskCount, platefromTotalEarnig: 0, totalSubscriptionCount:totalSubscriptionCount }, 200);
 
     } catch (error) {
         console.error('Error fetching tasks:', error);

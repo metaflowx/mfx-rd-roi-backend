@@ -6,6 +6,7 @@ import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 import { errorHandler, notFound } from "./middleware";
 import { connectMongoDB } from './config/dbConnect';
+import { getFreezeDetails } from './repositories/referral'; 
 
 
 import { Users, Admin, PackagePlan, Task, Investment, Referral, Dashboard, Transaction, Wallet } from './routes'
@@ -78,7 +79,9 @@ app.notFound((c) => {
 
 const port = Bun.env.PORT || 8000
 
-
+cron.schedule("0 * * * *", async () => {
+  await getFreezeDetails();
+})
 
 if (process.env.ROLE === 'Watcher') {
   /// Watcher

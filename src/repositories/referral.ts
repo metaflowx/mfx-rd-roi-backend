@@ -180,6 +180,8 @@ export const distributeReferralRewards = async (userId: Types.ObjectId, packageA
                     await freeze.save();
                 }
                 userWallet.totalLockInWeiUsd = (parseFloat(userWallet.totalLockInWeiUsd) + parseFloat(parseEther(commission.toString()).toString())).toString();
+                await userWallet.save();
+
             }
 
             /// Move up the referral chain
