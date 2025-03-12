@@ -110,19 +110,18 @@ export const calculateInvestmentStats = (packageData: any): InvestmentStats => {
 
         /// Calculate today's earnings (if investment is still active)
         if (daysSinceInvestment < packageDetails.durationInDays) {
-            todaysSumOfInvestmentEarnings += packageDetails.dailyEarnings;
+            todaysSumOfInvestmentEarnings += (packageDetails.dailyEarnings + packageDetails.dailyBonus);
         }
 
         /// Calculate yesterday's earnings (if investment was active yesterday)
         if (daysSinceInvestment > 0 && daysSinceInvestment <= packageDetails.durationInDays) {
-            yesterdaysSumOfInvestmentEarnings += packageDetails.dailyEarnings;
+            yesterdaysSumOfInvestmentEarnings += (packageDetails.dailyEarnings + packageDetails.dailyBonus);
         }
 
         /// Calculate total earnings (capped at durationInDays)
         const totalEarningsDays = Math.min(daysSinceInvestment, packageDetails.durationInDays);
-        console.log({totalEarningsDays});
         
-        totalSumOfInvestmentEarnings += totalEarningsDays * packageDetails.dailyEarnings;
+        totalSumOfInvestmentEarnings += totalEarningsDays * (packageDetails.dailyEarnings + packageDetails.dailyBonus);
 
         /// Calculate total bonus (capped at durationInDays)
         totalSumOfInvestmentBonus += totalEarningsDays * (packageDetails.dailyBonus || 0); // Use bonus field if available
