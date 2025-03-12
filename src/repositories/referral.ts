@@ -5,6 +5,7 @@ import walletModel from '../models/walletModel';
 import { parseEther } from 'viem';
 import InvestmentModel from "../models/investmentModel";
 import freezeWalletModel from "../models/freezeWalletModel";
+import packageModel from "../models/packageModel";
 
 dotenv.config();
 
@@ -178,7 +179,7 @@ export const distributeReferralRewards = async (userId: Types.ObjectId, packageA
                     });
                     await freeze.save();
                 }
-
+                userWallet.totalLockInWeiUsd = (parseFloat(userWallet.totalLockInWeiUsd) + parseFloat(parseEther(commission.toString()).toString())).toString();
             }
 
             /// Move up the referral chain
@@ -192,3 +193,107 @@ export const distributeReferralRewards = async (userId: Types.ObjectId, packageA
         console.error("Error in distributing referral rewards:", error);
     }
 };
+
+
+export const getFreezeDetails = async () => {
+    try {
+        const freezeData = await freezeWalletModel.find({
+            lockerDetails: { 
+                $elemMatch: { status: "PENDING" } 
+            }
+        });        
+        if (!freezeData) {
+            return 'freezeData not found';
+        }
+        for (const element of freezeData) {
+            const expiredIndexes: number[] = [];
+            const completedIndexes: number[] = [];
+
+            const userWallet = await walletModel.findOne({ userId: element.userId });
+            if(!userWallet){
+                console.log(`Wallet not found for user ${element.userId}`);
+                break;
+            }
+
+            const packageData = await InvestmentModel.findOne(
+                { userId: element.userId },
+                {
+                    buyPackagesDetails: {
+                        $filter: {
+                            input: "$buyPackagesDetails",
+                            as: "package",
+                            cond: { $eq: ["$$package.status", "ACTIVE"] },
+                        },
+                    },
+                }
+            ).populate("buyPackagesDetails.packageId");
+            for (let i = 0; i < element.lockerDetails.length; i++) {
+                const data = element.lockerDetails[i];
+                let expiredAt = new Date(new Date(data.createdAt).getTime() + 48 * 60 * 60 * 1000); // Add 48 hours
+                if (data.status !== "PENDING") continue;
+
+                if (new Date() > expiredAt) {
+                    expiredIndexes.push(i);
+                    userWallet.totalLockInWeiUsd = (parseFloat(userWallet.totalLockInWeiUsd) - parseFloat(parseEther(data.amount.toString()).toString())).toString();
+                }else if (packageData) {
+                    // Handle Active Package Check
+                    const packages: any = await packageModel.findById(data.packageId);
+                    if (!packages) continue;
+
+                    const isMatchingPackage = packageData?.buyPackagesDetails
+                        .some((pkg: any) => pkg.packageId.amount >= packages.amount);
+
+                    if (isMatchingPackage) {
+                        completedIndexes.push(i);
+                        userWallet.totalFlexibleBalanceInWeiUsd = (parseFloat(userWallet.totalFlexibleBalanceInWeiUsd) + parseFloat(parseEther(data.amount.toString()).toString())).toString();
+                        userWallet.totalLockInWeiUsd = (parseFloat(userWallet.totalLockInWeiUsd) - parseFloat(parseEther(data.amount.toString()).toString())).toString();
+                    }
+                }
+               
+            }
+            await userWallet.save();
+
+        
+            if (expiredIndexes.length > 0) {
+                // Update only expired records using arrayFilters
+                await freezeWalletModel.updateOne(
+                    { _id: element._id },
+                    {
+                        $set: { 
+                            "lockerDetails.$[elem].status": "EXPIRE" 
+                        } 
+                    },
+                    {
+                        arrayFilters: [{ "elem.status": "PENDING", "elem.createdAt": { $lte: new Date(Date.now() - 48 * 60 * 60 * 1000) } }] 
+                    }
+                );
+        
+                console.log(`Updated ${expiredIndexes.length} expired lockers for user:`, element.userId);
+            }
+            if (completedIndexes.length > 0) {
+                await freezeWalletModel.updateOne(
+                    { _id: element._id },
+                    {
+                        $set: { 
+                            "lockerDetails.$[elem].status": "COMPLETED" 
+                        } 
+                    },
+                    {
+                        arrayFilters: [{ "elem.status": "PENDING", "elem.createdAt": { $lte: new Date(Date.now() - 48 * 60 * 60 * 1000) } }] 
+                    }
+                );
+        
+                console.log(`Updated ${completedIndexes.length} completed lockers for user:`, element.userId);
+            }
+            
+        }
+
+
+        
+        return;
+    } catch (error) {
+        return Error("Server error")
+    }
+};
+
+

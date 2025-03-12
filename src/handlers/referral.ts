@@ -34,7 +34,7 @@ export const getReferralStats = async (c: Context) => {
       return c.json({ message: "No referral stats found" }, 404);
     }
 
-    const levelsMap = referralStats.referralStats.levels || new Map();
+    const levelsMap :any= referralStats.referralStats.levels || new Map();
     const levels = Object.fromEntries(levelsMap);
 
     const totalEarningsLevelWise: Record<string, number> = {};
@@ -63,7 +63,7 @@ export const getReferralStats = async (c: Context) => {
       }, 0);
     };
 
-    const levelStats = {};
+    const levelStats :any= {};
     for (const [levelName, level] of Object.entries(levels)) {
       const teamTopUp = await getTeamTopUp(level.referrals || []);
       totalTeamTopUp += teamTopUp;
