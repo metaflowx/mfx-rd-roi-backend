@@ -47,7 +47,7 @@ export const dashboard = async (c: Context) => {
 
         
         const totalSubscriptionCount = totalBuyInvestmentPlans.length > 0 ? totalBuyInvestmentPlans[0].total : 0;
-        return c.json({ message: "dashboard data fetch successfully", userCount: userCount, totalUserInvestment: 0, totalUserInvestment: totalInvestment[0].totalInvestment , blockUser: blockedUserCount, activePackageCount: activePackageCount, activeTaskCount:activeTaskCount, platefromTotalEarnig: 0, totalSubscriptionCount:totalSubscriptionCount }, 200);
+        return c.json({ message: "dashboard data fetch successfully", userCount: userCount, totalUserEarning: 0, totalUserInvestment: totalInvestment[0].totalInvestment , blockUser: blockedUserCount, activePackageCount: activePackageCount, activeTaskCount:activeTaskCount, platefromTotalEarnig: 0, totalSubscriptionCount:totalSubscriptionCount }, 200);
 
     } catch (error) {
         console.error('Error fetching tasks:', error);
