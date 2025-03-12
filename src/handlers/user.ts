@@ -163,6 +163,8 @@ export const getAllUsers = async (c: Context) => {
         ]);
         const usersWithInvestments = await Promise.all(
             usersWithWallets.map(async (user) => {
+
+                const wallets = await WalletModel.findOne({ userId: user._id }).select("address");                
                 const packageData = await InvestmentModel.findOne(
                     { userId: user._id },
                     {
@@ -178,6 +180,7 @@ export const getAllUsers = async (c: Context) => {
                 if (!packageData || packageData.buyPackagesDetails.length === 0) {
                     return {
                         ...user,
+                        wallets,
                         stats: null 
                     };
                 }        
@@ -185,6 +188,7 @@ export const getAllUsers = async (c: Context) => {
         
                 return {
                     ...user,
+                    wallets,
                     stats 
                 };
             })
