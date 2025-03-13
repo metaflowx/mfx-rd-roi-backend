@@ -205,7 +205,7 @@ export const getFreezeDetails = async () => {
             }
         });        
         if (!freezeData) {
-            return 'freezeData not found';
+             console.log('freezeData not found');
         }
         for (const element of freezeData) {
             const expiredIndexes: number[] = [];
@@ -232,8 +232,7 @@ export const getFreezeDetails = async () => {
             for (let i = 0; i < element.lockerDetails.length; i++) {
                 const data = element.lockerDetails[i];
                 let expiredAt = new Date(new Date(data.createdAt).getTime() + 48 * 60 * 60 * 1000); // Add 48 hours
-                if (data.status !== "PENDING") continue;
-
+                if (data.status !== "PENDING") break;
                 if (new Date() > expiredAt) {
                     expiredIndexes.push(i);
                     userWallet.totalLockInWeiUsd = (parseFloat(userWallet.totalLockInWeiUsd) - parseFloat(parseEther(data.amount.toString()).toString())).toString();
@@ -257,35 +256,31 @@ export const getFreezeDetails = async () => {
 
         
             if (expiredIndexes.length > 0) {
-                // Update only expired records using arrayFilters
+                let updateQuery :any= {};
+            
+                expiredIndexes.forEach(index => {
+                    updateQuery[`lockerDetails.${index}.status`] = "EXPIRE";  // Target specific index
+                });
                 await freezeWalletModel.updateOne(
                     { _id: element._id },
-                    {
-                        $set: { 
-                            "lockerDetails.$[elem].status": "EXPIRE" 
-                        } 
-                    },
-                    {
-                        arrayFilters: [{ "elem.status": "PENDING", "elem.createdAt": { $lte: new Date(Date.now() - 48 * 60 * 60 * 1000) } }] 
-                    }
+                    { $set: updateQuery }
                 );
         
                 console.log(`Updated ${expiredIndexes.length} expired lockers for user:`, element.userId);
             }
             if (completedIndexes.length > 0) {
+                let updateQuery :any= {};
+            
+                completedIndexes.forEach(index => {
+                    updateQuery[`lockerDetails.${index}.status`] = "COMPLETED";  // Target specific index
+                });
+            
                 await freezeWalletModel.updateOne(
                     { _id: element._id },
-                    {
-                        $set: { 
-                            "lockerDetails.$[elem].status": "COMPLETED" 
-                        } 
-                    },
-                    {
-                        arrayFilters: [{ "elem.status": "PENDING", "elem.createdAt": { $lte: new Date(Date.now() - 48 * 60 * 60 * 1000) } }] 
-                    }
+                    { $set: updateQuery }
                 );
-        
-                console.log(`Updated ${completedIndexes.length} completed lockers for user:`, element.userId);
+            
+                console.log(`Updated lockers at indexes ${completedIndexes} for user:`, element.userId);
             }
             
         }

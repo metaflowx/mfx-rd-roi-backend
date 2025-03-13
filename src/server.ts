@@ -80,6 +80,7 @@ app.notFound((c) => {
 const port = Bun.env.PORT || 8000
 
 cron.schedule("0 * * * *", async () => {
+  console.log('LOCK UNLOCK CRON RUNNING.');
   await getFreezeDetails();
 })
 
