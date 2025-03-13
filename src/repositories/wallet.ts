@@ -49,6 +49,7 @@ export const updateWalletBalance = async (
       wallet.totalBalanceInWeiUsd = (parseFloat(wallet.totalBalanceInWeiUsd) + balanceInUSD).toString()
       wallet.totalDepositInWeiUsd = (parseFloat(wallet.totalDepositInWeiUsd) + balanceInUSD).toString()
     } else {
+      wallet.lastWithdrawalAt = new Date()
       wallet.totalFlexibleBalanceInWeiUsd = (parseFloat(wallet.totalFlexibleBalanceInWeiUsd) + parseFloat(balanceChangeInWei)).toString()
       wallet.totalWithdrawInWeiUsd = (parseFloat(wallet.totalWithdrawInWeiUsd) + parseFloat(balanceChangeInWei)).toString()
     }

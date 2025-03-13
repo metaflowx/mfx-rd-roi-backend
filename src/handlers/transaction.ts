@@ -108,7 +108,7 @@ export const txRequestForWithdrawal = async (c: Context) => {
             txType: 'withdrawal',
             txHash: randomUUIDv7('hex'),
             receiverAddress: withdrawalAddress,
-            amountInWei: parseEther(withdrawalAmount).toString(),
+            amountInWei: parseEther(withdrawalAmount).toString()
         })
         if(tx){
             await updateWalletBalance(user._id,`-${parseEther(withdrawalAmount)}`)
