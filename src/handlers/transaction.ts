@@ -9,6 +9,7 @@ import { updateWalletBalance } from "../repositories/wallet";
 import { randomUUIDv7 } from "bun";
 import { parseEther } from "viem";
 import { formatUnits, parseUnits } from "viem";
+import referralModel from "../models/referralModel";
 
 
 
@@ -75,6 +76,10 @@ export const txRequestForWithdrawal = async (c: Context) => {
         const wallet = await WalletModel.findOne({userId: user._id})
         if (!wallet) {
             return c.json({ message: "User wallet not found." }, 404);
+        }
+        const referral= await referralModel.findOne({userId: user._id})
+        if(referral && !referral.enableReferral){
+            return c.json({ message: "You Must Unlock a Higher Level Package to Withdraw Cash" }, 400);
         }
         if (wallet.lastWithdrawalAt) {
             const lastWithdrawalTime = new Date(wallet.lastWithdrawalAt);

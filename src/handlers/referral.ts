@@ -6,7 +6,7 @@ import packageModel from "../models/packageModel";
 import { calculateInvestmentStats } from '../repositories/investment';
 import freezeModel from "../models/freezeWalletModel";
 import WalletModel from "../models/walletModel";
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import dotenv from "dotenv";
 import { formatUnits } from "viem";
 
@@ -237,20 +237,39 @@ export const disableReferral = async (c: Context) => {
     if (!validStatuses.includes(enableReferral)) {
       return c.json({ message: "Invalid status" }, 400);
     }
-    // Update enableReferral to false
-    const updatedReferral = await ReferralEarnings.findOneAndUpdate(
-      { _id },
-      { $set: { enableReferral: enableReferral } },
-      { new: true }
-    );
-    console.log("updatedReferral=====>>", updatedReferral);
-    if (!updatedReferral) {
-      return c.json({ message: "Referral earnings data not found" }, 404);
+    // Find the ReferralEarnings record by ID
+    const referralRecord = await ReferralEarnings.findById(_id);
+    if (!referralRecord) {
+          return c.json({ message: "Referral earnings data not found" }, 404);
     }
+    
+    // Extract userId from the referral record
+    const userId = referralRecord.userId;
+    // Function to recursively freeze the referral tree
+    const updateReferralTree = async (userId: mongoose.Schema.Types.ObjectId) => {
+      // Update the current user's enableReferral status
+      const updatedReferral = await ReferralEarnings.findOneAndUpdate(
+        { userId: userId},
+        { $set: { enableReferral: enableReferral } },
+        { new: true }
+      );
+
+      if (!updatedReferral) {
+        return;
+      }
+
+    // Find all users referred by the current user
+      const referredUsers = await ReferralEarnings.find({ referrerBy: userId });
+      
+    // Recursively freeze the referral tree for each referred user
+      await Promise.all(referredUsers.map(user => updateReferralTree(user.userId)));
+    };
+
+    // Start freezing the referral tree from the given user
+    await updateReferralTree(userId);
 
     return c.json({
-      message: "Referral disabled successfully",
-      updatedReferral,
+      message: "Referral disabled successfully"
     });
   } catch (error) {
     return c.json({ message: "Server error", error }, 500);
