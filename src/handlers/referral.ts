@@ -243,23 +243,23 @@ export const disableReferral = async (c: Context) => {
           return c.json({ message: "Referral earnings data not found" }, 404);
     }
     
-    // Extract userId from the referral record
-    const userId = referralRecord.userId;
-    // Function to recursively freeze the referral tree
-    const updateReferralTree = async (userId: mongoose.Schema.Types.ObjectId) => {
-      // Update the current user's enableReferral status
-      const updatedReferral = await ReferralEarnings.findOneAndUpdate(
+  // Extract userId from the referral record
+  const userId = referralRecord.userId;
+  // Function to recursively freeze the referral tree
+  const updateReferralTree = async (userId: mongoose.Schema.Types.ObjectId) => {
+    // Update the current user's enableReferral status
+    const updatedReferral = await ReferralEarnings.findOneAndUpdate(
         { userId: userId},
         { $set: { enableReferral: enableReferral } },
         { new: true }
       );
 
-      if (!updatedReferral) {
+    if (!updatedReferral) {
         return;
       }
 
     // Find all users referred by the current user
-      const referredUsers = await ReferralEarnings.find({ referrerBy: userId });
+    const referredUsers = await ReferralEarnings.find({ referrerBy: userId });
       
     // Recursively freeze the referral tree for each referred user
       await Promise.all(referredUsers.map(user => updateReferralTree(user.userId)));
