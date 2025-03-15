@@ -79,10 +79,6 @@ app.notFound((c) => {
 
 const port = Bun.env.PORT || 8000
 
-cron.schedule("0 * * * *", async () => {
-  console.log('LOCK UNLOCK CRON RUNNING.');
-  await getFreezeDetails();
-})
 
 if (process.env.ROLE === 'Watcher') {
   /// Watcher
@@ -148,7 +144,7 @@ if (process.env.ROLE === 'Sender') {
     /// Balance
 
     /// cron job for network one run every 5 mins
-    cron.schedule("*/5 * * * *", async () => {
+    cron.schedule("*/6 * * * *", async () => {
       const depositWatcherOne = new Balance(
         "bsc",
       )
@@ -169,6 +165,12 @@ if (process.env.ROLE === 'Sender') {
         "amoy",
       )
       await depositWatcherOne.evmWorker("EVM-Polygon-Testnet-Balance-1")
+    })
+
+    /// LOCK UNLOCK CRON RUNNING.
+    cron.schedule("*/5 * * * *", async () => {
+      console.log('LOCK UNLOCK CRON RUNNING.');
+      await getFreezeDetails();
     })
   } catch (error) {
     console.log(error);
