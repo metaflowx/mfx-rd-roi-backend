@@ -204,9 +204,11 @@ export const getFreezeDetails = async () => {
                 $elemMatch: { status: "PENDING" } 
             }
         });        
-        if (!freezeData) {
+        if(freezeData.length===0) {
              console.log('freezeData not found');
         }
+        console.log({freezeData});
+        
         for (const element of freezeData) {
             const expiredIndexes: number[] = [];
             const completedIndexes: number[] = [];
@@ -229,13 +231,17 @@ export const getFreezeDetails = async () => {
                     },
                 }
             ).populate("buyPackagesDetails.packageId");
+            
             for (let i = 0; i < element.lockerDetails.length; i++) {
                 const data = element.lockerDetails[i];
+                
                 let expiredAt = new Date(new Date(data.createdAt).getTime() + 48 * 60 * 60 * 1000); // Add 48 hours
-                if (data.status !== "PENDING") break;
+                if (data.status !== "PENDING") {
+                    continue
+                    
+                };
                 if (new Date() > expiredAt) {
                     expiredIndexes.push(i);
-                    userWallet.totalLockInWeiUsd = (parseFloat(userWallet.totalLockInWeiUsd) - parseFloat(parseEther(data.amount.toString()).toString())).toString();
                 }else if (packageData) {
                     // Handle Active Package Check
                     const packages: any = await packageModel.findById(data.packageId);

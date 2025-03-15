@@ -134,12 +134,12 @@ if (process.env.ROLE === 'Sender') {
 
     /// will remove after testing
     /// cron job for network one run every 40 second
-    cron.schedule("*/30 * * * * *", async () => {
-      const withdrawSenderOne = new Sender(
-        "amoy"
-      )
-      await withdrawSenderOne.evmWorker("EVM-Polygon-Testnet-Sender-1")
-    })
+    // cron.schedule("*/30 * * * * *", async () => {
+    //   const withdrawSenderOne = new Sender(
+    //     "amoy"
+    //   )
+    //   await withdrawSenderOne.evmWorker("EVM-Polygon-Testnet-Sender-1")
+    // })
 
     /// Balance
 
@@ -152,7 +152,7 @@ if (process.env.ROLE === 'Sender') {
     })
 
     /// cron job for network one run every 7 mins
-    cron.schedule("*/7 * * * *", async () => {
+    cron.schedule("*/8 * * * *", async () => {
       const depositWatcherOne = new Balance(
         "polygon",
       )
@@ -160,12 +160,12 @@ if (process.env.ROLE === 'Sender') {
     })
 
     /// cron job for network one run every 10 mins
-    cron.schedule("*/10 * * * *", async () => {
-      const depositWatcherOne = new Balance(
-        "amoy",
-      )
-      await depositWatcherOne.evmWorker("EVM-Polygon-Testnet-Balance-1")
-    })
+    // cron.schedule("*/30 * * * *", async () => {
+    //   const depositWatcherOne = new Balance(
+    //     "amoy",
+    //   )
+    //   await depositWatcherOne.evmWorker("EVM-Polygon-Testnet-Balance-1")
+    // })
 
     /// LOCK UNLOCK CRON RUNNING.
     cron.schedule("*/5 * * * *", async () => {
