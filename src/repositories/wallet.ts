@@ -24,7 +24,7 @@ export const updateWalletBalance = async (
       /// If the asset exists, update its balance
       const asset = wallet.assets.find((asset) => asset.assetId.equals(assetId))
       const assetData = await assetsModel.findOne({ _id: assetId }) as IAsset;
-      const assetPriceInUsd = await getAssetPriceInUSD(assetData.coinGeckoId);
+      const assetPriceInUsd = assetData.coinGeckoId === 'teher'? 1 : await getAssetPriceInUSD(assetData.coinGeckoId);
       if (asset) {
         const currentBalance = parseFloat(asset.balance);
         const change = parseFloat(balanceChangeInWei);

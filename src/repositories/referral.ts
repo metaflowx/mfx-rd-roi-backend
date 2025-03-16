@@ -91,10 +91,6 @@ export const distributeReferralRewards = async (userId: Types.ObjectId, packageA
             console.log("No referrer found for this user.");
             return;
         }
-        if (userReferral.enableReferral == false) {
-            console.log("Admin disable  referral reward for this user.");
-            return;
-        }
         let referrerId = userReferral.referrerBy;
         const commissionRates = [
             parseFloat(process.env.LEVEL_1_REWARD || "12") / 100, // Level 1: 12%
