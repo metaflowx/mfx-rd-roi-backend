@@ -256,9 +256,13 @@ const getProgress = async (userId: string, packageId: string) => {
 
         // Count how many tasks are completed today for this package
         const completedTasks = await taskModel.countDocuments({
-            "reviews.userId": userId,
-            "reviews.packageId": packageId, // Filter by package
-            "reviews.reviewDate": { $gte: today, $lt: tomorrow },
+            reviews: {
+                $elemMatch: {
+                    userId: userId,
+                    packageId: packageId,
+                    reviewDate: { $gte: today, $lt: tomorrow }
+                }
+            }
         });
 
         return {
