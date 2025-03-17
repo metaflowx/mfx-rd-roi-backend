@@ -4,8 +4,7 @@ import UserModel from '../models/userModel';
 import PackageModel from '../models/packageModel'; 
 import InvestmentModel from '../models/investmentModel'; 
 import { calculateInvestmentStats } from "../repositories/investment";
-
-
+import walletModel from '../models/walletModel';
 // Get All Tasks
 export const dashboard = async (c: Context) => {
     try {
@@ -85,8 +84,17 @@ export const dashboard = async (c: Context) => {
                 }
             }
         }
+        const totalFlexibleBalanceSum = await walletModel.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    total: { $sum: { $toDecimal: "$totalFlexibleBalanceInWeiUsd" } }
+                }
+            }
+        ]);
+        
         const totalSubscriptionCount = totalBuyInvestmentPlans.length > 0 ? totalBuyInvestmentPlans[0].total : 0;
-        return c.json({ message: "dashboard data fetch successfully", userCount: userCount, totalUserEarning: totalUserEarning, totalUserInvestment: totalInvestment[0].totalInvestment , blockUser: blockedUserCount, activePackageCount: activePackageCount, activeTaskCount:activeTaskCount, platefromTotalEarnig: 0, totalSubscriptionCount:totalSubscriptionCount }, 200);
+        return c.json({ message: "dashboard data fetch successfully", userCount: userCount, totalUserEarning: totalUserEarning,totalFlexibleBalanceSum: totalFlexibleBalanceSum[0]?.total?.toString() || "0", totalUserInvestment: totalInvestment[0].totalInvestment , blockUser: blockedUserCount, activePackageCount: activePackageCount, activeTaskCount:activeTaskCount, platefromTotalEarnig: 0, totalSubscriptionCount:totalSubscriptionCount }, 200);
 
     } catch (error) {
         console.error('Error fetching tasks:', error);

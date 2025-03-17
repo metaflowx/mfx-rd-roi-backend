@@ -163,7 +163,14 @@ export const getAllUsers = async (c: Context) => {
         ]);
         const usersWithInvestments = await Promise.all(
             usersWithWallets.map(async (user) => {
-
+                const referralData :any= await ReferralEarnings.findOne({ userId: user._id })
+                .select("referralStats referrals")
+                .lean();
+                const totalCommissionEarning = Object.values(referralData.referralStats.levels).reduce(
+                    (sum:any, level:any) => sum + level.earnings,
+                    0
+                  );
+                  
                 const wallets = await WalletModel.findOne({ userId: user._id }).select("address");                
                 const packageData = await InvestmentModel.findOne(
                     { userId: user._id },
@@ -181,6 +188,7 @@ export const getAllUsers = async (c: Context) => {
                     return {
                         ...user,
                         wallets,
+                        totalCommissionEarning,
                         stats: null 
                     };
                 }        
@@ -189,6 +197,7 @@ export const getAllUsers = async (c: Context) => {
                 return {
                     ...user,
                     wallets,
+                    totalCommissionEarning,
                     stats 
                 };
             })
